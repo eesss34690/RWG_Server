@@ -8,22 +8,26 @@ using namespace std;
 
 int shell(int fd){
     // change the fd of stdout to socket
-    dup2(fd, STDOUT_FILENO);
-    char *percent = "% ";
-    char *buffer;
+    int fd_temp[2];
+    ::pipe(fd_temp);
+    ::dup2(fd_temp[1], STDOUT_FILENO);
+    close fd_temp[0];
 
+    char *percent = "% ";
+    char buf[15001];
+    int cc;
 
     setenv("PATH", "bin:.", 1);
-    string input;
     Pipeline all;  
     // set the signal handler
     signal(SIGCHLD, [](int signo) {
         int status;
         while (waitpid(-1, &status, WNOHANG) > 0);
     }); 
-    while(1){
-        write(fd, percent, sizeof(percent));
-        if (!getline(cin, input)) {
+    
+    write(fd, percent, sizeof(percent));	
+    while(cc = read(fd, buf, sizeof(buf))){
+       if (cc < 0) {
 		for (int i=0; i< 2048; i++)
 		{
 			for (auto &j: all.get_child_proc(i))
@@ -31,7 +35,8 @@ int shell(int fd){
 		}
 		::exit(0);
 		return 0;
-        } 
+        } 	
+	string input(buf); 
         if(input.empty()) continue;
             Command cmd(input);
 
@@ -49,7 +54,8 @@ int shell(int fd){
         {
             int status;
             while ( (status = cmd.get_block()[i].execute(all, first\
-                , (i == cmd.get_block().size() - 1)? true: false)) == 1)  // fork error
+                , (i == cmd.get_block().size() - 1)? true: false)) == 1, \
+		fd_temp[1])  // fork error
                 usleep(1500);
             first = false;
             if (status != 0)
@@ -67,7 +73,9 @@ int shell(int fd){
             int status;
             waitpid(i, &status, 0);
         }
-        all.next_();
+        all.next_(); 
+        write(fd, percent, sizeof(percent));	
+    
 
     }
 

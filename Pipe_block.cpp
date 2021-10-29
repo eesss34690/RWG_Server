@@ -12,7 +12,7 @@ Pipe_block::Pipe_block()
 	m_flag = 0;
 }
 
-int Pipe_block::printenv()
+int Pipe_block::printenv(int fd_out)
 {
 	if (m_argv.size() < 2)
 		cerr << "Invalid arguments: printenv\n";
@@ -20,7 +20,8 @@ int Pipe_block::printenv()
 	{
 		const char * env = getenv(m_argv[1].c_str());
 		if (env != NULL)
-			cout << env << endl;
+			write(fd_out, env, sizeof(env));
+			//cout << env << endl;
 	}
 	return 0;
 }
@@ -46,12 +47,12 @@ char ** Pipe_block::parse_arg()
 	return arg;
 }
 
-int Pipe_block::execute(Pipeline& all, bool first, bool last)
+int Pipe_block::execute(Pipeline& all, bool first, bool last, int fd_out)
 {	
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
-			return printenv();
+			return printenv(fd_out);
 		else if (m_argv[0] == "setenv")
 			return setenv();
 	}	
@@ -65,43 +66,18 @@ int Pipe_block::execute(Pipeline& all, bool first, bool last)
 				kill(j, SIGKILL);
 			}
 		}
-		//vector<pid_t> ex=all.get_exit();
-		//for (int i=0; i< ex.size(); i++)
-		//	kill(ex[i], SIGKILL);
 		exit(0);	
 		return 0;
 	}	
 	{
 		m_pipe = all.get_pipe(0);
-		//if (!m_pipe.mode_on())
-		//{
-		//	cout << "create\n";
-			//all.set_pipe(0, Pipe_IO::create());
-		//	m_pipe = all.get_pipe(m_num);
-		//}
-		//else
-		//{
-			//m_pipe.construct_pipe();
-		//}
 		Pipe_IO new_fd;
 		if (m_flag < 2&& all.get_pipe(m_num).mode_on())
 		{
 			new_fd = all.get_pipe(m_num);
-			//new_fd.construct_pipe();
 		}
 		else
 			new_fd = Pipe_IO::create();
-		//cout << all.get() << " pipe io: "<< m_pipe.get_in() <<" " <<m_pipe.get_out() << endl;
-		// get its Pipe
-		//if (!exist)
-		//{
-		//	m_pipe = all.get_pipe(0);
-		//	cout << "create pipe IO\n";
-		//	all.set_pipe(0, Pipe_IO::create());
-		//	exist = true;
-		//}
-		//if (m_flag < 2)
-		//	all.add_pipe(m_num);
 		
 		// fork
 		pid_t child_pid = fork();

@@ -67,7 +67,7 @@ private:
 	char ** parse_arg();
 public:
 	Pipe_block();
-	int execute(Pipeline& all, bool first, bool last);
+	int execute(Pipeline& all, bool first, bool last, int fd_out);
 	void set_cnt(int num) {m_num = num;}
 	void set_flag(int flag) {m_flag = flag;}
 	void set_file(string filename) {m_filename = filename;}

@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-		(void) TCPdaytimed(ssock);
+		(void) shell(ssock);
 		(void) close(ssock);
 	}
 }
