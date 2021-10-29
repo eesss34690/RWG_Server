@@ -18,8 +18,8 @@ int	connectTCP(const char *host, const char *service);
 int
 main(int argc, char *argv[])
 {
-	char	*host = "localhost";	/* host to use if none supplied	*/
-	char	*service = "daytime";	/* default service port		*/
+	char	*host = "localhost";	/* host to use if none supplied	8886";*/
+	char	*service = "8886";	/* default service port		*/
 
 	switch (argc) {
 	case 1:
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
  * TCPdaytime - invoke Daytime on specified host and print results
  *------------------------------------------------------------------------
  */
-void TCPdaytime(const char *host, const char *service)
+int TCPdaytime(const char *host, const char *service)
 {
 	char	buf[LINELEN+1];		/* buffer for one line of text	*/
 	int	s, n;			/* socket, read count		*/

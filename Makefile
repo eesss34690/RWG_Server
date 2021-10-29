@@ -4,7 +4,6 @@ INCLUDE =
 
 CLNTS = TCPdaytime
 SERVS = TCPdaytimed
-OTHER = superd 
 
 CFLAGS = ${DEFS} ${INCLUDE}
 
@@ -17,15 +16,15 @@ SXSRC = passiveTCP.cpp passivesock.cpp
 CXOBJ = connectTCP.o connectsock.o errexit.o
 SXOBJ = passiveTCP.o passivesock.o errexit.o
 
-PROGS = ${CLNTS} ${SERVS} ${OTHER}
+PROGS = ${CLNTS} ${SERVS}
 
 all: ${PROGS}
 
 ${CLNTS}: ${CXOBJ}
-	${CC} -o $@ ${CFLAGS} $@.o ${CXOBJ} -lnsl -lsocket
+	${CC} -o $@ ${CFLAGS} $@.o ${CXOBJ}
 
 ${SERVS}: ${SXOBJ}
-	${CC} -o $@ ${CFLAGS} $@.o ${SXOBJ}  -lnsl -lsocket
+	${CC} -o $@ ${CFLAGS} $@.o ${SXOBJ}  
 
 clients: ${CLNTS}
 servers: ${SERVS}
