@@ -1,25 +1,68 @@
-CXX = clang++
-CPPFLAGS = -Wall -O2 -g -pedantic -std=c++11
+CC = g++
 
-OBJ := main.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o
+INCLUDE =
 
-npshell: $(OBJ)  
-	$(CXX) $(CPPFLAGS) $(OBJ) -o npshell
+CLNTS = TCPdaytime
+SERVS = TCPdaytimed
+OTHER = superd 
 
-%.o: %.cpp
-	$(CXX) $(CPPFLAGS) -c $< -o $@
+CFLAGS = ${DEFS} ${INCLUDE}
 
-./bin/%: ./cmds/%.cpp
-	$(CXX) $(CPPFLAGS) -c $< -o ./bin/%
+CSRC = TCPdaytime.cpp 
+CXSRC = connectTCP.cpp connectsock.cpp errexit.cpp
 
-# for adding the binary into tesing env
-precompile: ./cmds/noop.cpp ./cmds/number.cpp ./cmds/removetag.cpp ./cmds/removetag0.cpp
-	cp /usr/bin/ls ./bin
-	cp /usr/bin/cat ./bin
-	$(CXX) ./cmds/noop.cpp -o ./bin/noop
-	$(CXX) ./cmds/number.cpp -o ./bin/number
-	$(CXX) ./cmds/removetag.cpp -o ./bin/removetag
-	$(CXX) ./cmds/removetag0.cpp -o ./bin/removetag0
+SSRC = TCPdaytimed.cpp
+SXSRC = passiveTCP.cpp passivesock.cpp
 
-clean:
-	rm *.o NPShell *.txt ./bin/*
+CXOBJ = connectTCP.o connectsock.o errexit.o
+SXOBJ = passiveTCP.o passivesock.o errexit.o
+
+PROGS = ${CLNTS} ${SERVS} ${OTHER}
+
+all: ${PROGS}
+
+${CLNTS}: ${CXOBJ}
+	${CC} -o $@ ${CFLAGS} $@.o ${CXOBJ} -lnsl -lsocket
+
+${SERVS}: ${SXOBJ}
+	${CC} -o $@ ${CFLAGS} $@.o ${SXOBJ}  -lnsl -lsocket
+
+clients: ${CLNTS}
+servers: ${SERVS}
+
+clean: FRC
+	rm -f Makefile.bak a.out core errs lint.errs ${PROGS} *.o
+
+depend: ${HDR} ${CSRC} ${SSRC} ${TNSRC} FRC
+	maketd -a ${DEFS} ${INCLUDE} ${CSRC} ${SSRC} ${TNSRC}
+
+install: all FRC
+	@echo "Your installation instructions here."
+
+lint: ${HDR} ${XSRC} ${CSRC} ${SSRC} FRC
+	lint ${DEFS} ${INCLUDE} ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
+
+print: Makefile ${SRC} FRC
+	lpr Makefile ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
+
+spotless: clean FRC
+	rcsclean Makefile ${HDR} ${SRC}
+
+tags: ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
+	ctags ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
+
+${HDR} ${CSRC} ${CXSRC} ${SSRC} ${SXSRC}:
+	co $@
+
+TCPdaytime: TCPdaytime.o
+TCPdaytimed: TCPdaytimed.o
+
+FRC:
+	
+# DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
+S=/usr/include/sys
+I=/usr/include
+
+TCPdaytime.o: $I/stdio.h TCPdaytime.cpp
+
+TCPdaytimed.o: $I/netinet/in.h $I/stdio.h $S/types.h TCPdaytimed.cpp
