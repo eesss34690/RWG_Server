@@ -16,12 +16,12 @@ int		passiveTCP(const char *service, int qlen);
 
 #define QLEN	5
 
+int shell(int fd);
 /*------------------------------------------------------------------------
  * main - Iterative TCP server for DAYTIME service
  *------------------------------------------------------------------------
  */
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	struct	sockaddr_in fsin;	/* the from address of a client	*/
 	char	*service = "8886";	/* service name or port number	*/
