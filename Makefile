@@ -1,4 +1,4 @@
-CC = g++
+CC = clang++
 
 INCLUDE =
 
@@ -73,8 +73,8 @@ TCPdaytimed: TCPdaytimed.o
 FRC:
 	
 # DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
-S=/usr/include/sys
-I=/usr/include
+S=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/sys
+I=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include
 
 TCPdaytime.o: $I/stdio.h TCPdaytime.cpp
 

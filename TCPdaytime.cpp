@@ -29,7 +29,7 @@ main(int argc, char *argv[])
 		service = argv[2];
 		/* FALL THROUGH */
 	case 2:
-		host = argv[1];
+		service = argv[1];
 		break;
 	default:
 		fprintf(stderr, "usage: TCPdaytime [host [port]]\n");

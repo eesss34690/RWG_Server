@@ -8,10 +8,6 @@ using namespace std;
 
 int shell(int fd){
     // change the fd of stdout to socket
-    int fd_temp[2];
-    ::pipe(fd_temp);
-    ::dup2(fd_temp[1], STDOUT_FILENO);
-    close fd_temp[0];
 
     char *percent = "% ";
     char buf[15001];
@@ -25,7 +21,7 @@ int shell(int fd){
         while (waitpid(-1, &status, WNOHANG) > 0);
     }); 
     
-    write(fd, percent, sizeof(percent));	
+    write(fd, percent, sizeof(percent));
     while(cc = read(fd, buf, sizeof(buf))){
        if (cc < 0) {
 		for (int i=0; i< 2048; i++)
@@ -36,7 +32,7 @@ int shell(int fd){
 		::exit(0);
 		return 0;
         } 	
-	string input(buf); 
+	    string input(buf); 
         if(input.empty()) continue;
             Command cmd(input);
 
@@ -54,8 +50,7 @@ int shell(int fd){
         {
             int status;
             while ( (status = cmd.get_block()[i].execute(all, first\
-                , (i == cmd.get_block().size() - 1)? true: false)) == 1, \
-		fd_temp[1])  // fork error
+                , (i == cmd.get_block().size() - 1)? true: false)) == 1)  // fork error
                 usleep(1500);
             first = false;
             if (status != 0)
@@ -63,6 +58,8 @@ int shell(int fd){
             usleep(1500);
         }
         all.close(0);
+
+        fsync(fd);	
         auto last = cmd.get_block().back();
         if (last.get_flag() == 1)
         {

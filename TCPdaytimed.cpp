@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <iostream>
 
 extern int	errno;
 int		errexit(const char *format, ...);
@@ -27,6 +28,7 @@ int main(int argc, char *argv[])
 	char	*service = "8886";	/* service name or port number	*/
 	int	msock, ssock;		/* master & slave sockets	*/
 	socklen_t	alen;		/* from-address length		*/
+	pid_t   cpid;
 
 	switch (argc) {
 	case	1:
@@ -44,8 +46,32 @@ int main(int argc, char *argv[])
 		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-		(void) shell(ssock);
-		(void) close(ssock);
+		cpid = fork();
+		if (cpid < 0) exit(1);  /* exit if fork() fails */
+		if ( cpid ) {
+			/* In the parent process: */
+			close( ssock ); /* csock is not needed in the parent after the fork */
+			waitpid( cpid, NULL, 0 ); /* wait for and reap child process */
+		} else {
+			/* In the child process: */
+    		char buf[15001];
+			int cc;
+			dup2( ssock, STDOUT_FILENO );  /* duplicate socket on stdout */
+			dup2( ssock, STDERR_FILENO );  /* duplicate socket on stderr too */
+			close( ssock );  /* can close the original after it's duplicated */	
+			while(cc = read(ssock, buf, sizeof(buf)))
+			{
+				std::cout << "first\n";
+				std::cout << "second\n";
+				fsync(ssock);
+			}
+
+
+
+			return 0;
+		}
+		//(void) shell(ssock);
+		
 	}
 }
 

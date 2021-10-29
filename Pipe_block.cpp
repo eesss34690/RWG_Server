@@ -12,7 +12,7 @@ Pipe_block::Pipe_block()
 	m_flag = 0;
 }
 
-int Pipe_block::printenv(int fd_out)
+int Pipe_block::printenv()
 {
 	if (m_argv.size() < 2)
 		cerr << "Invalid arguments: printenv\n";
@@ -20,8 +20,7 @@ int Pipe_block::printenv(int fd_out)
 	{
 		const char * env = getenv(m_argv[1].c_str());
 		if (env != NULL)
-			write(fd_out, env, sizeof(env));
-			//cout << env << endl;
+			cout << env << endl;
 	}
 	return 0;
 }
@@ -47,12 +46,12 @@ char ** Pipe_block::parse_arg()
 	return arg;
 }
 
-int Pipe_block::execute(Pipeline& all, bool first, bool last, int fd_out)
+int Pipe_block::execute(Pipeline& all, bool first, bool last)
 {	
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
-			return printenv(fd_out);
+			return printenv();
 		else if (m_argv[0] == "setenv")
 			return setenv();
 	}	
