@@ -9,8 +9,7 @@
  *------------------------------------------------------------------------
  */
 /*VARARGS1*/
-int
-errexit(const char *format, ...)
+int errexit(const char *format, ...)
 {
 	va_list	args;
 

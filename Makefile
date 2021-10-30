@@ -1,9 +1,16 @@
 CC = g++
+CXX = clang++
+
+# DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
+S=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/sys
+I=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include
+CPPFLAGS = -Wall -O2 -g -pedantic -std=c++11 -I$I/netinet/in.h -I$I/stdio.h -I$S/types.h
 
 INCLUDE =
 
 CLNTS = TCPdaytime
 SERVS = TCPdaytimed
+SERVS_1 = TCPdaytimed
 
 CFLAGS = ${DEFS} ${INCLUDE}
 
@@ -11,23 +18,30 @@ CSRC = TCPdaytime.cpp
 CXSRC = connectTCP.cpp connectsock.cpp errexit.cpp
 
 SSRC = TCPdaytimed.cpp
-SXSRC = passiveTCP.cpp passivesock.cpp shell.cpp Pipe_block.cpp Command.cpp Pipe_IO.cpp Pipeline.cpp
+SXSRC = TCPdaytimed.cpp passiveTCP.cpp passivesock.cpp errexit.cpp shell.cpp Pipe_block.cpp Command.cpp Pipe_IO.cpp Pipeline.cpp
 
-CXOBJ = connectTCP.o connectsock.o errexit.o
-SXOBJ = passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o
+CXOBJ = TCPdaytime.o connectTCP.o connectsock.o errexit.o
+SXOBJ = TCPdaytimed.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o
 
-PROGS = ${CLNTS} ${SERVS} ${SHL}
+# PROGS = ${SERVS_1} TCPdaytimed
 
-all: ${PROGS}
+all: np_simple client
+
+np_simple: ${SXOBJ}
+	$(CXX) $(CPPFLAGS) $(SXOBJ) -o np_simple
+
+client: ${CXOBJ}
+	$(CXX) $(CPPFLAGS) $(CXOBJ) -o client\
+
+
+%.o: %.cpp
+	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 ${CLNTS}: ${CXOBJ}
 	${CC} -o $@ ${CFLAGS} $@.o ${CXOBJ}
 
 ${SERVS}: ${SXOBJ}
-	${CC} -o $@ ${CFLAGS} $@.o ${SXOBJ}  
-
-${SHL}: ${SHLOBJ} 
-	${CC} -o $@ ${CFLAGS} $@.o ${SHLOBJ}
+	${CC} -std=c++11 -o $@ ${CFLAGS} $@.o ${SXOBJ}  
 
 precompile: ./cmds/noop.cpp ./cmds/number.cpp ./cmds/removetag.cpp ./cmds/removetag0.cpp
 	cp /usr/bin/ls ./bin
@@ -41,38 +55,12 @@ precompile: ./cmds/noop.cpp ./cmds/number.cpp ./cmds/removetag.cpp ./cmds/remove
 clients: ${CLNTS}
 servers: ${SERVS}
 
-clean: FRC
-	rm -f Makefile.bak a.out core errs lint.errs ${PROGS} *.o
-
-depend: ${HDR} ${CSRC} ${SSRC} ${TNSRC} FRC
-	maketd -a ${DEFS} ${INCLUDE} ${CSRC} ${SSRC} ${TNSRC}
-
-install: all FRC
-	@echo "Your installation instructions here."
-
-lint: ${HDR} ${XSRC} ${CSRC} ${SSRC} FRC
-	lint ${DEFS} ${INCLUDE} ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
-
-print: Makefile ${SRC} FRC
-	lpr Makefile ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
-
-spotless: clean FRC
-	rcsclean Makefile ${HDR} ${SRC}
-
-tags: ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
-	ctags ${CSRC} ${SSRC} ${CXSRC} ${SXSRC}
-
-${HDR} ${CSRC} ${CXSRC} ${SSRC} ${SXSRC}:
-	co $@
+clean:
+	rm -f Makefile.bak a.out core errs ${PROGS} *.o
 
 TCPdaytime: TCPdaytime.o
 TCPdaytimed: TCPdaytimed.o
 
-FRC:
-	
-# DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
-S=/usr/include/sys
-I=/usr/include
 
 TCPdaytime.o: $I/stdio.h TCPdaytime.cpp
 
