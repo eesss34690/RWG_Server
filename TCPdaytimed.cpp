@@ -62,9 +62,6 @@ int main(int argc, char *argv[])
 			//fsync(STDOUT_FILENO);
 			//shell(ssock);
 			close(ssock);
-			std::string temp;
-			std::cin>>temp;
-			std::cout <<"e" <<temp << "q\n\n";
 			shell(ssock);
 			//std::cout << "test\n";
 			//return 0;
