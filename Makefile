@@ -1,4 +1,4 @@
-CC = clang++
+CC = g++
 
 INCLUDE =
 
@@ -11,9 +11,7 @@ CSRC = TCPdaytime.cpp
 CXSRC = connectTCP.cpp connectsock.cpp errexit.cpp
 
 SSRC = TCPdaytimed.cpp
-SXSRC = passiveTCP.cpp passivesock.cpp
-
-SHLSRC = shell.cpp Pipe_block.cpp Command.cpp Pipe_IO.cpp Pipeline.cpp
+SXSRC = passiveTCP.cpp passivesock.cpp shell.cpp Pipe_block.cpp Command.cpp Pipe_IO.cpp Pipeline.cpp
 
 CXOBJ = connectTCP.o connectsock.o errexit.o
 SXOBJ = passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o
@@ -73,8 +71,8 @@ TCPdaytimed: TCPdaytimed.o
 FRC:
 	
 # DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
-S=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/sys
-I=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include
+S=/usr/include/sys
+I=/usr/include
 
 TCPdaytime.o: $I/stdio.h TCPdaytime.cpp
 

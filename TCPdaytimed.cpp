@@ -1,5 +1,5 @@
 /* TCPdaytimed.c - main */
-
+#include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -59,16 +59,9 @@ int main(int argc, char *argv[])
 			dup2( ssock, STDOUT_FILENO );  /* duplicate socket on stdout */
 			dup2( ssock, STDERR_FILENO );  /* duplicate socket on stderr too */
 			close( ssock );  /* can close the original after it's duplicated */	
-			while(cc = read(ssock, buf, sizeof(buf)))
-			{
-				std::cout << "first\n";
-				std::cout << "second\n";
-				fsync(ssock);
-			}
-
-
-
-			return 0;
+			shell(ssock);
+			//std::cout << "test\n";
+			//return 0;
 		}
 		//(void) shell(ssock);
 		
