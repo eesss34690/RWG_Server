@@ -2,8 +2,8 @@ CC = g++
 CXX = clang++
 
 # DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
-S=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include/sys
-I=/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include
+S=/usr/include/sys
+I=/usr/include
 CPPFLAGS = -Wall -O2 -g -pedantic -std=c++11 -I$I/netinet/in.h -I$I/stdio.h -I$S/types.h
 
 INCLUDE =
@@ -25,7 +25,7 @@ SXOBJ = TCPdaytimed.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o 
 
 # PROGS = ${SERVS_1} TCPdaytimed
 
-all: np_simple client
+all: np_simple client precompile
 
 np_simple: ${SXOBJ}
 	$(CXX) $(CPPFLAGS) $(SXOBJ) -o np_simple

@@ -8,22 +8,20 @@ using namespace std;
 
 int shell(int fd){
     // change the fd of stdout to socket
-
-    char *percent = "% ";
-    char buf[15001];
-    int cc;
-
+ 
     setenv("PATH", "bin:.", 1);
     Pipeline all;  
+    string input;
     // set the signal handler
     signal(SIGCHLD, [](int signo) {
         int status;
         while (waitpid(-1, &status, WNOHANG) > 0);
-    }); 
-    
-    write(fd, percent, sizeof(percent));
-    while(cc = read(fd, buf, sizeof(buf))){
-       if (cc < 0) {
+    });
+    while(1){
+    //while(cc = read(fd, buf, sizeof(buf))){
+	cout << "% ";
+	if (!getline(cin, input)){
+	//if (cc < 0) {
 		for (int i=0; i< 2048; i++)
 		{
 			for (auto &j: all.get_child_proc(i))
@@ -31,16 +29,11 @@ int shell(int fd){
 		}
 		::exit(0);
 		return 0;
-        } 	
-	    string input(buf); 
-        if(input.empty()) continue;
-            Command cmd(input);
+        }
+	input.pop_back();
+	if(input.empty()) continue;
+	Command cmd(input);
 
-        // get the fd table now
-        //Pipe_IO shell_fd = all.get_pipe(0);
-        //if (!shell_fd.mode_on())
-        //	shell_fd.construct_pipe();
-        
         int first = true;
         if (all.get_pipe(0).mode_on())
         {
@@ -59,7 +52,6 @@ int shell(int fd){
         }
         all.close(0);
 
-        fsync(fd);	
         auto last = cmd.get_block().back();
         if (last.get_flag() == 1)
         {
@@ -70,8 +62,7 @@ int shell(int fd){
             int status;
             waitpid(i, &status, 0);
         }
-        all.next_(); 
-        write(fd, percent, sizeof(percent));	
+	all.next_(); 
     
 
     }

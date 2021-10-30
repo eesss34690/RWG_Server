@@ -54,11 +54,17 @@ int main(int argc, char *argv[])
 			waitpid( cpid, NULL, 0 ); /* wait for and reap child process */
 		} else {
 			/* In the child process: */
-    		char buf[15001];
-			int cc;
+			dup2( ssock, STDIN_FILENO );
 			dup2( ssock, STDOUT_FILENO );  /* duplicate socket on stdout */
 			dup2( ssock, STDERR_FILENO );  /* duplicate socket on stderr too */
-			close( ssock );  /* can close the original after it's duplicated */	
+			//close( ssock );  /* can close the original after it's duplicated */	
+			//std::cout <<"% ";
+			//fsync(STDOUT_FILENO);
+			//shell(ssock);
+			close(ssock);
+			std::string temp;
+			std::cin>>temp;
+			std::cout <<"e" <<temp << "q\n\n";
 			shell(ssock);
 			//std::cout << "test\n";
 			//return 0;

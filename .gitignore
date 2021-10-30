@@ -1,4 +1,5 @@
 *.txt
-NPShell
+np_simple
+client
 bin/
 cmds/
