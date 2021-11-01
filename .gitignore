@@ -1,5 +1,6 @@
 *.txt
 np_simple
+np_single_proc
 client
 bin/
 cmds/

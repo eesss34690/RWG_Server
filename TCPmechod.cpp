@@ -91,10 +91,9 @@ main(int argc, char *argv[])
 					user_pool.logout(fd_user[fd]);
 					user_pool.delete_user(fd_user[fd]);
 					fd_user.erase(fd);
-					(void) close(fd);
+					close(fd);
 					FD_CLR(fd, &afds);
 				}
-
 			}
 	}
 }
@@ -106,10 +105,11 @@ main(int argc, char *argv[])
 int
 echo(Pipeline& all, int sock)
 {
+	std::cout << "now sock is: " << sock << endl;
+	dup2(sock, STDERR_FILENO);
 	string 	input;
 	char in_char[15001];
 	memset(&in_char, 0, sizeof in_char);
-	std::cout << "now sock is: " << sock << endl;
 	if (!read(sock, in_char, sizeof in_char)){
         for (int i=0; i< 2048; i++)
         {
@@ -122,8 +122,10 @@ echo(Pipeline& all, int sock)
 	input = in_char;
     input.pop_back();
     input.pop_back();
-	if(input.empty()) return 1;
-	
+	if(input.empty()) {
+		write(sock, "% ", 3);
+		return 1;
+	}
     Command cmd(input);
 	int first = true;
     if (all.get_pipe(0).mode_on())
@@ -153,6 +155,8 @@ echo(Pipeline& all, int sock)
         int status;
         waitpid(i, &status, 0);
     }
+	if (input == "exit")
+		return 0;
 	write(sock, "% ", 3);
 	all.get_pipe(0).close();
 	all.next_(); 

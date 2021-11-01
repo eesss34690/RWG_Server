@@ -62,9 +62,8 @@ void Broadcast::login(int id)
     brst_msg();
 }
 
-void Broadcast::logout(int fd)
+void Broadcast::logout(int id)
 {
-    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     strcat(sbuf, "*** User '");
     strcat(sbuf, users[id].c_str());
     strcat(sbuf, "' left. ***\n");
@@ -84,9 +83,8 @@ void Broadcast::brst_msg()
     memset(&sbuf, 0, sizeof sbuf);
 }
 
-void Broadcast::delete_user(int fd)
+void Broadcast::delete_user(int id)
 {
-    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     users[id] = "";
     ip[id] = "";
     ports[id] = "";
@@ -144,3 +142,103 @@ void Broadcast::name(string new_, int fd)
         brst_msg();        
     }
 }
+
+void Broadcast::tell(string msg, int fd, int to_id)
+{
+    if (users[to_id - 1] == "") 
+    {
+        strcat(sbuf, "*** Error: user #");
+        strcat(sbuf, std::to_string(to_id).c_str());
+        strcat(sbuf, "does not existyet. ***\n");
+
+        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+            errexit ("write error brst\n");
+        memset(&sbuf, 0, sizeof sbuf);
+    }
+    else
+    {
+        int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+
+        strcat(sbuf, "*** ");
+        strcat(sbuf, users[id].c_str());
+        strcat(sbuf, " told you ***: ");
+        strcat(sbuf, msg.c_str());
+        strcat(sbuf, "\n");
+        
+        if ((write(socket[to_id - 1], sbuf, sizeof sbuf)) < 0)
+            errexit ("write error brst\n");
+        memset(&sbuf, 0, sizeof sbuf);        
+    }
+}
+void Broadcast::yell(string msg, int fd)
+{
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+    strcat(sbuf, "*** ");
+    strcat(sbuf, users[id].c_str());
+    strcat(sbuf, " yelled ***: ");
+    strcat(sbuf, msg.c_str());
+    strcat(sbuf, "\n");
+    brst_msg();
+}
+/*
+int Broadcast::get_out(int fd, string cmd)
+{
+    cout << in_fd.size() << "?\n";
+    auto ge_idx = cmd.find('>', 0) + 1;
+    auto space = cmd.find(' ', ge_idx);
+    
+    while (cmd[ge_idx] == ' ')
+		ge_idx++;
+	while (cmd[--space] == ' ');
+	int id_to = std::stoi(cmd.substr(ge_idx, 1 + space - ge_idx)) - 1;
+    int id_fm = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+
+    bool cont = true;
+    for (int i = 0; i < in_fd.size(); i++)
+    {
+        cout << "searching for " << in_fd[i] << " to " << out_fd[i] << endl;
+        // Do something with iter
+        if (out_fd[i] == id_to && in_fd[i] == id_fm)
+        {
+            strcat(sbuf, "*** Error: the pipe #");
+            strcat(sbuf, std::to_string(id_fm).c_str());
+            strcat(sbuf, "->#");
+            strcat(sbuf, std::to_string(id_to).c_str());
+            strcat(sbuf, " already exists. ***\n");
+            cont = false;
+            if ((write(fd, sbuf, sizeof sbuf)) < 0)
+                errexit ("write error brst\n");
+            memset(&sbuf, 0, sizeof sbuf);   
+            return -1;
+        }
+    }
+    if (cont)
+    {
+        Pipe_IO pipe;
+        pipe = Pipe_IO::create();
+        pipes.push_back(pipe);
+        in_fd.push_back(id_fm);
+        out_fd.push_back(id_to);
+        cout << in_fd.size() <<out_fd.size() << pipes.size()<< "?\n";
+        strcat(sbuf, "*** ");
+        strcat(sbuf, users[id_fm].c_str());
+        strcat(sbuf, " (#");
+        strcat(sbuf, std::to_string(id_fm + 1).c_str());
+        strcat(sbuf, ") just piped '");
+        strcat(sbuf, cmd.c_str());
+        strcat(sbuf, "' to ");
+        strcat(sbuf, users[id_to].c_str());
+        strcat(sbuf, " (#");
+        strcat(sbuf, std::to_string(id_to + 1).c_str());
+        strcat(sbuf, ") ***\n");
+        brst_msg();
+        memset(&sbuf, 0, sizeof sbuf); 
+        return pipe.get_out();
+    }
+}
+
+int Broadcast::get_in(string cmd, int fd)
+{
+
+}
+*/

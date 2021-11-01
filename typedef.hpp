@@ -65,6 +65,9 @@ public:
 	vector<int> socket;
 	char sbuf[15000];
 public:
+	//vector<int> in_fd;
+	//vector<int> out_fd;
+	//vector<Pipe_IO> pipes;
 	Broadcast();
 	int add_user(sockaddr_in fsin, int sock);
 	void update_small();
@@ -76,16 +79,22 @@ public:
 	void delete_user(int id);
 	void who(int fd);
 	void name(string new_, int fd);
+	void tell(string msg, int fd, int to_id);
+	void yell(string msg, int fd);
+	//int get_in(string cmd, int fd);
+	//int get_out(int fd, string cmd);
 };
 
 class Pipe_block
 {
 private:
 	bool 		exist;
-	Pipe_IO         m_pipe;
+	Pipe_IO     m_pipe;
 	int 		m_num;
 	int 		m_flag;
+	int 		m_in;
 	string 		m_filename;
+	string 		spec_pipe;
 	vector<string>	m_argv;
 	int printenv();
 	int setenv();
@@ -96,7 +105,9 @@ public:
 	int execute_new(Broadcast& env, Pipeline& all, bool first, bool last, int sock);
 	void set_cnt(int num) {m_num = num;}
 	void set_flag(int flag) {m_flag = flag;}
+	void set_in(int in) {m_in = in;}
 	void set_file(string filename) {m_filename = filename;}
+	void set_spec(string cmd) {spec_pipe = cmd;}
 	void set_argv(vector<string> argv) {m_argv = argv;}
 	int get_cnt() {return m_num;}
 	int get_flag() {return m_flag;}
