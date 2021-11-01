@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
 #include <fcntl.h>
 
 #define MaxForks    2048
@@ -36,10 +37,11 @@ private:
 	Pipe_IO m_pipes[MaxForks];
 	vector<pid_t> m_child_proc[MaxForks];
 	vector<pid_t> m_exit_child;
-	int now;
+	//int now;
 	int get_num(int offset) {return (now + offset) % MaxForks;}
 public:
-	Pipeline() {now = 0; m_exit_child.resize(0);}
+	int now;
+	Pipeline() {now = 0; m_exit_child.resize(0); setenv("PATH", "bin:.", 1);}
 	Pipe_IO& get_pipe(int offset) {return m_pipes[get_num(offset)];}
 	void set_pipe(int offset, Pipe_IO pipe) {m_pipes[get_num(offset)] = pipe;}
 	void add_pipe(int offset);
@@ -51,6 +53,29 @@ public:
 	void add_exit(pid_t child) {m_exit_child.push_back(child);}
 	vector<pid_t> get_exit() {return m_exit_child;}
 	void next_();
+};
+
+class Broadcast
+{
+public:
+	vector<string> users;
+	int smallest;
+	vector<string> ip;
+	vector<string> ports;
+	vector<int> socket;
+	char sbuf[15000];
+public:
+	Broadcast();
+	int add_user(sockaddr_in fsin, int sock);
+	void update_small();
+	void change_name(string name, int idx){users[idx] = name;}
+	void welcome(int fd);
+	void login(int id);
+	void logout(int id);
+	void brst_msg();
+	void delete_user(int id);
+	void who(int fd);
+	void name(string new_, int fd);
 };
 
 class Pipe_block
@@ -68,6 +93,7 @@ private:
 public:
 	Pipe_block();
 	int execute(Pipeline& all, bool first, bool last);
+	int execute_new(Broadcast& env, Pipeline& all, bool first, bool last, int sock);
 	void set_cnt(int num) {m_num = num;}
 	void set_flag(int flag) {m_flag = flag;}
 	void set_file(string filename) {m_filename = filename;}

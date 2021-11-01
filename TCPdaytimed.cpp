@@ -12,7 +12,6 @@
 
 extern int	errno;
 int		errexit(const char *format, ...);
-int		TCPdaytimed(int fd);
 int		passiveTCP(const char *service, int qlen);
 
 #define QLEN	5
@@ -57,32 +56,8 @@ int main(int argc, char *argv[])
 			dup2( ssock, STDIN_FILENO );
 			dup2( ssock, STDOUT_FILENO );  /* duplicate socket on stdout */
 			dup2( ssock, STDERR_FILENO );  /* duplicate socket on stderr too */
-			//close( ssock );  /* can close the original after it's duplicated */	
-			//std::cout <<"% ";
-			//fsync(STDOUT_FILENO);
-			//shell(ssock);
 			close(ssock);
 			shell(ssock);
-			//std::cout << "test\n";
-			//return 0;
 		}
-		//(void) shell(ssock);
-		
 	}
-}
-
-/*------------------------------------------------------------------------
- * TCPdaytimed - do TCP DAYTIME protocol
- *------------------------------------------------------------------------
- */
-int TCPdaytimed(int fd)
-{
-	char	*pts;			/* pointer to time string	*/
-	time_t	now;			/* current time			*/
-	//char	*ctime();
-
-	(void) time(&now);
-	pts = ctime(&now);
-	(void) write(fd, pts, strlen(pts));
-	return 0;
 }

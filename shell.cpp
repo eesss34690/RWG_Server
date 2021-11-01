@@ -9,7 +9,7 @@ using namespace std;
 int shell(int fd){
     // change the fd of stdout to socket
  
-    setenv("PATH", "bin:.", 1);
+    //setenv("PATH", "bin:.", 1);
     Pipeline all;  
     string input;
     // set the signal handler
@@ -18,21 +18,19 @@ int shell(int fd){
         while (waitpid(-1, &status, WNOHANG) > 0);
     });
     while(1){
-    //while(cc = read(fd, buf, sizeof(buf))){
-	cout << "% ";
-	if (!getline(cin, input)){
-	//if (cc < 0) {
-		for (int i=0; i< 2048; i++)
-		{
-			for (auto &j: all.get_child_proc(i))
-				kill(j, SIGKILL);
-		}
-		::exit(0);
-		return 0;
-        }
-	input.pop_back();
-	if(input.empty()) continue;
-	Command cmd(input);
+        cout << "% ";
+        if (!getline(cin, input)){
+            for (int i=0; i< 2048; i++)
+            {
+                for (auto &j: all.get_child_proc(i))
+                    kill(j, SIGKILL);
+            }
+            ::exit(0);
+            return 0;
+            }
+        input.pop_back();
+        if(input.empty()) continue;
+        Command cmd(input);
 
         int first = true;
         if (all.get_pipe(0).mode_on())

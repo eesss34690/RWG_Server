@@ -3,3 +3,4 @@ np_simple
 client
 bin/
 cmds/
+*.o

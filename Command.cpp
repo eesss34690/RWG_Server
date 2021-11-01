@@ -61,8 +61,19 @@ Command::Command( string cmd )
 		single_cmd = separate_output(cmd, start_idx, end_idx);
 		auto space = find_char(single_cmd, ' ', 0);
 		string action = separate_output(single_cmd, 0, space);
+
+		if (action == "who" )
+		{
+			m_block.back().set_flag(-1);
+		}
+		else if (action == "name" )
+		{
+			m_block.back().set_flag(-2);
+			vector<string> real = {separate_output(single_cmd, space + 1, single_cmd.length())};
+			m_block.back().set_argv(real);
+		}
 		// type: builtin
-		if (action == "setenv")
+		else if (action == "setenv")
 		{
 			auto space_2 = find_char(single_cmd, ' ', space + 1);
 			m_block.back().set_flag(3);
