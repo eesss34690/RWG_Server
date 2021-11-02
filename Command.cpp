@@ -81,7 +81,7 @@ Command::Command( string cmd )
 			}
 
 			// send
-			if (ge_idx != string::npos && cmd[ge_idx + 1] != ' ')
+			if (ge_idx != string::npos && single_cmd[ge_idx + 1] != ' ')
 			{
 				m_block.back().set_flag(-5);
 				m_block.back().set_spec(cmd);
@@ -127,17 +127,25 @@ Command::Command( string cmd )
 			else {
 				size_t idx = space, idx2 = space;
 				vector<string> argv;
+				string temp;
 				argv.push_back(action);
 				while (idx != string::npos)
 				{
 					idx2 = find_char(single_cmd, ' ', idx + 1);
-					argv.push_back(separate_output(single_cmd, idx + 1, idx2));
+					temp = separate_output(single_cmd, idx + 1, idx2);
 					idx = idx2;
+					if (m_block.back().get_in() && temp.find("<") != string::npos)
+						continue;
+					argv.push_back(temp);
 				}
-				if (m_block.back().get_flag() < 3)
-					argv.pop_back();
 				if (m_block.back().get_flag() == 2)
+				{
 					argv.pop_back();
+					argv.pop_back();
+				}
+				if (m_block.back().get_flag() == -5)
+					argv.pop_back();
+
 				m_block.back().set_argv(argv);
 			}			
 		}

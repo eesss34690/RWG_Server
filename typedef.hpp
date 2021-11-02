@@ -60,6 +60,7 @@ class Broadcast
 public:
 	vector<string> users;
 	int smallest;
+	int smallest_2;
 	vector<string> ip;
 	vector<string> ports;
 	vector<int> socket;
@@ -81,7 +82,7 @@ public:
 	void name(string new_, int fd);
 	void tell(string msg, int fd, int to_id);
 	void yell(string msg, int fd);
-	//int get_in(string cmd, int fd);
+	int get_in(string cmd, int fd);
 	int get_out(int fd, string cmd);
 };
 
@@ -111,6 +112,7 @@ public:
 	void set_argv(vector<string> argv) {m_argv = argv;}
 	int get_cnt() {return m_num;}
 	int get_flag() {return m_flag;}
+	int get_in() {return m_in;}
 	string get_file() {return m_filename;}
 	vector<string> get_argv() {return m_argv;}
 };

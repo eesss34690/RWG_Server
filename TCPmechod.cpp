@@ -153,6 +153,7 @@ echo(Pipeline& all, int sock)
     for (auto &i: all.get_child_proc(0))
     {
         int status;
+		cout << "waiting for " << i << endl;
         waitpid(i, &status, 0);
     }
 	if (input == "exit")
@@ -160,5 +161,6 @@ echo(Pipeline& all, int sock)
 	write(sock, "% ", 3);
 	all.get_pipe(0).close();
 	all.next_(); 
+	cout << "finished\n";
 	return 1;
 }

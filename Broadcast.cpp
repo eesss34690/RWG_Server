@@ -14,10 +14,9 @@ Broadcast::Broadcast()
     ip.resize(30);
     ports.resize(30); 
     socket.resize(30);
-    in_fd.resize(100);
-    out_fd.resize(100); 
-    pipes.resize(100);
-    smallest_2 = 0;
+    in_fd.resize(0);
+    out_fd.resize(0); 
+    pipes.resize(0);
     smallest = 0;
     memset(&sbuf, 0, sizeof sbuf);
 }
@@ -189,7 +188,6 @@ void Broadcast::yell(string msg, int fd)
 }
 int Broadcast::get_out(int fd, string cmd)
 {
-    cout <<"in fd size: "<< in_fd.size() << "?\n";
     auto ge_idx = cmd.find('>', 0) + 1;
     auto space = cmd.find(' ', ge_idx);
     
@@ -199,6 +197,17 @@ int Broadcast::get_out(int fd, string cmd)
 	int id_to = std::stoi(cmd.substr(ge_idx, 1 + space - ge_idx)) - 1;
     int id_fm = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
 
+    if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
+    {
+        strcat(sbuf, "*** Error: user #");
+        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, " does not exist yet. ***\n");
+        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+            errexit ("write error brst\n");
+        memset(&sbuf, 0, sizeof sbuf);   
+        return -1;
+    }
+
     bool cont = true;
     for (int i = 0; i < in_fd.size(); i++)
     {
@@ -207,9 +216,9 @@ int Broadcast::get_out(int fd, string cmd)
         if (out_fd[i] == id_to && in_fd[i] == id_fm)
         {
             strcat(sbuf, "*** Error: the pipe #");
-            strcat(sbuf, std::to_string(id_fm).c_str());
+            strcat(sbuf, std::to_string(id_fm + 1).c_str());
             strcat(sbuf, "->#");
-            strcat(sbuf, std::to_string(id_to).c_str());
+            strcat(sbuf, std::to_string(id_to + 1).c_str());
             strcat(sbuf, " already exists. ***\n");
             cont = false;
             if ((write(fd, sbuf, sizeof sbuf)) < 0)
@@ -242,9 +251,67 @@ int Broadcast::get_out(int fd, string cmd)
     }
 }
 
-/*
 int Broadcast::get_in(string cmd, int fd)
 {
+    auto ge_idx = cmd.find('<', 0) + 1;
+    auto space = cmd.find(' ', ge_idx);
+    
+    while (cmd[ge_idx] == ' ')
+		ge_idx++;
+	while (cmd[--space] == ' ');
+	int id_fm = std::stoi(cmd.substr(ge_idx, 1 + space - ge_idx)) - 1;
+    int id_to = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
 
+    if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
+    {
+        strcat(sbuf, "*** Error: user #");
+        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, " does not exist yet. ***\n");
+        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+            errexit ("write error brst\n");
+        memset(&sbuf, 0, sizeof sbuf);   
+        return -1;
+    }
+
+    for (int i = 0; i < in_fd.size(); i++)
+    {
+        cout << "searching for " << in_fd[i] << " to " << out_fd[i] << endl;
+        // Do something with iter
+        if (out_fd[i] == id_to && in_fd[i] == id_fm)
+        {
+            strcat(sbuf, "*** ");
+            strcat(sbuf, users[id_to].c_str());
+            strcat(sbuf, " (#");
+            strcat(sbuf, std::to_string(id_fm + 1).c_str());
+            strcat(sbuf, ") just received from ");
+            strcat(sbuf, users[id_fm].c_str());
+            strcat(sbuf, " (#");
+            strcat(sbuf, std::to_string(id_to + 1).c_str());
+            strcat(sbuf, ") by '");
+            strcat(sbuf, cmd.c_str());
+            strcat(sbuf, "' ***\n");
+            brst_msg();
+            memset(&sbuf, 0, sizeof sbuf); 
+
+            int temp = pipes[i].get_in();
+
+            in_fd.erase(in_fd.begin() + i);
+            out_fd.erase(out_fd.begin() + i);
+            pipes.erase(pipes.begin() + i);
+            return temp;
+        }
+    }
+
+    strcat(sbuf, "*** Error: the pipe #");
+    strcat(sbuf, std::to_string(id_fm).c_str());
+    strcat(sbuf, "->#");
+    strcat(sbuf, std::to_string(id_to).c_str());
+    strcat(sbuf, " does not exist yet. ***\n");
+    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        errexit ("write error brst\n");
+    memset(&sbuf, 0, sizeof sbuf);  
+             
+    return -1;
+    
 }
-*/
+

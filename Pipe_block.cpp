@@ -43,6 +43,7 @@ char ** Pipe_block::parse_arg()
 	size_t i = 0;
 	for (; i< m_argv.size(); i++)
 	{
+		//cout << "arg: "<< m_argv.at(i) << endl;
 		arg[i] = strdup(m_argv.at(i).c_str());
 	}
 	arg[i] = NULL;
@@ -192,6 +193,7 @@ int Pipe_block::execute(Pipeline& all, bool first, bool last)
 
 int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last, int sock)
 {	
+	cout << "my flag: "<< m_flag << endl;
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
@@ -229,6 +231,17 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 	}	
 	else
 	{
+		int fd_5, fd_in;
+		if (m_flag == -5)
+		{
+			fd_5 = env.get_out(sock, spec_pipe);
+		}
+		
+		if (m_in)
+		{
+			fd_in = env.get_in(spec_pipe, sock);
+		}
+		
 		m_pipe = all.get_pipe(0);
 		cout << "current out: "<< m_pipe.get_out() << endl;
 		Pipe_IO new_fd;
@@ -264,18 +277,16 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					dup2(fd, STDIN_FILENO);
 				}
 			}
-			/*
 			else if (m_in)
 			{
-				int fd = env.get_in(spec_pipe, sock);
-				if (fd != -1)
+				if (fd_in != -1)
 				{
-					dup2(fd, STDIN_FILENO);
+					dup2(fd_in, STDIN_FILENO);
+					::close(fd_in);
+					fd_in = -1;
 				}
-				else
-					return 0;
 			}
-			*/
+			
 			//deal with out table
 			// case 1: !N (0)
 			if (m_flag == 0)
@@ -300,6 +311,15 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 				int fd_file = open(m_filename.c_str(), (O_RDWR | O_CREAT | O_TRUNC), 0644);
 				dup2(fd_file, STDOUT_FILENO);
 			}
+			else if (m_flag == -5)
+			{
+				if (fd_5 != -1)
+				{
+					dup2(fd_5, STDOUT_FILENO);	
+					::close(fd_5);
+					fd_5 = -1;
+				}
+			}
 			else if (m_flag > 2)
 			{
 				if (!last)
@@ -314,17 +334,6 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 				{
 					dup2(sock, STDOUT_FILENO);
 				}	
-			}
-			
-			else if (m_flag == -5)
-			{
-				int fd = env.get_out(sock, spec_pipe);
-				if (fd != -1)
-				{
-					dup2(fd, STDOUT_FILENO);	
-				}
-				else
-					return 0;
 			}
 			
 			// finish fd table reassignment, close it
@@ -343,8 +352,8 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 			}
 			else if (execvp(m_argv[0].c_str(), arg) < 0)
 			{
-				cerr << "Unknown command: [" << m_argv[0] << "]." << endl;
-				exit(0);
+					cerr << "Unknown command: [" << m_argv[0] << "]." << endl;
+					exit(0);
 			}
 	
 			return 0;
