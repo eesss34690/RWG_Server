@@ -319,7 +319,6 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 			else if (m_flag == -5)
 			{
 				int fd = env.get_out(sock, spec_pipe);
-				cout << env.in_fd.size() <<env.out_fd.size() << env.pipes.size()<< "!!!\n";
 				if (fd != -1)
 				{
 					dup2(fd, STDOUT_FILENO);	
@@ -328,7 +327,6 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					return 0;
 			}
 			
-			cout << env.in_fd.size() <<env.out_fd.size() << env.pipes.size()<< "QQQ\n";
 			// finish fd table reassignment, close it
 			m_pipe.close();
 			new_fd.close();

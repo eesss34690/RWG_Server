@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <vector>
 #include "typedef.hpp"
+#include <algorithm>
 
 int	errexit(const char *format, ...);
 using namespace std;
@@ -13,10 +14,10 @@ Broadcast::Broadcast()
     ip.resize(30);
     ports.resize(30); 
     socket.resize(30);
-    in_fd.clear();
-    out_fd.clear(); 
-    pipes.clear();
-    cout << in_fd.size() << "init\n";
+    in_fd.resize(100);
+    out_fd.resize(100); 
+    pipes.resize(100);
+    smallest_2 = 0;
     smallest = 0;
     memset(&sbuf, 0, sizeof sbuf);
 }
@@ -224,7 +225,6 @@ int Broadcast::get_out(int fd, string cmd)
         pipes.push_back(pipe);
         in_fd.push_back(id_fm);
         out_fd.push_back(id_to);
-        cout << in_fd.size() <<out_fd.size() << pipes.size()<< "?\n";
         strcat(sbuf, "*** ");
         strcat(sbuf, users[id_fm].c_str());
         strcat(sbuf, " (#");
