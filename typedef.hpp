@@ -65,9 +65,9 @@ public:
 	vector<int> socket;
 	char sbuf[15000];
 public:
-	//vector<int> in_fd;
-	//vector<int> out_fd;
-	//vector<Pipe_IO> pipes;
+	vector<int> in_fd;
+	vector<int> out_fd;
+	vector<Pipe_IO> pipes;
 	Broadcast();
 	int add_user(sockaddr_in fsin, int sock);
 	void update_small();
@@ -82,7 +82,7 @@ public:
 	void tell(string msg, int fd, int to_id);
 	void yell(string msg, int fd);
 	//int get_in(string cmd, int fd);
-	//int get_out(int fd, string cmd);
+	int get_out(int fd, string cmd);
 };
 
 class Pipe_block

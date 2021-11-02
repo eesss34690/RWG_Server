@@ -1,9 +1,11 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <vector>
 #include "typedef.hpp"
 
 int	errexit(const char *format, ...);
+using namespace std;
 
 Broadcast::Broadcast()
 {
@@ -11,6 +13,10 @@ Broadcast::Broadcast()
     ip.resize(30);
     ports.resize(30); 
     socket.resize(30);
+    in_fd.clear();
+    out_fd.clear(); 
+    pipes.clear();
+    cout << in_fd.size() << "init\n";
     smallest = 0;
     memset(&sbuf, 0, sizeof sbuf);
 }
@@ -180,10 +186,9 @@ void Broadcast::yell(string msg, int fd)
     strcat(sbuf, "\n");
     brst_msg();
 }
-/*
 int Broadcast::get_out(int fd, string cmd)
 {
-    cout << in_fd.size() << "?\n";
+    cout <<"in fd size: "<< in_fd.size() << "?\n";
     auto ge_idx = cmd.find('>', 0) + 1;
     auto space = cmd.find(' ', ge_idx);
     
@@ -237,6 +242,7 @@ int Broadcast::get_out(int fd, string cmd)
     }
 }
 
+/*
 int Broadcast::get_in(string cmd, int fd)
 {
 

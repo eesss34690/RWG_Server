@@ -315,7 +315,7 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					dup2(sock, STDOUT_FILENO);
 				}	
 			}
-			/*
+			
 			else if (m_flag == -5)
 			{
 				int fd = env.get_out(sock, spec_pipe);
@@ -327,7 +327,8 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 				else
 					return 0;
 			}
-			*/
+			
+			cout << env.in_fd.size() <<env.out_fd.size() << env.pipes.size()<< "QQQ\n";
 			// finish fd table reassignment, close it
 			m_pipe.close();
 			new_fd.close();
