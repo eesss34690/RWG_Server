@@ -260,6 +260,16 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 		else if (child_pid > 0)
 		{
 			// child will do the job, close it
+			if (m_flag == -5)
+			{
+				::close(fd_5);
+				fd_5 = -1;
+			}
+			if (m_in)
+			{
+				::close(fd_in);
+				fd_in = -1;
+			}
 			m_pipe.close();
 			all.set_pipe(m_num, new_fd);
 			all.add_process(m_num, child_pid);
