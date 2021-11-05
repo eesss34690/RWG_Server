@@ -18,10 +18,11 @@ CPPFLAGS = -Wall -O2 -DDEBUG -g -pedantic -std=c++11 -I$I/netinet/in.h -I$I/stdi
 
 CFLAGS = ${DEFS} ${INCLUDE}
 
-S1OBJ = TCPdaytimed.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o 
-S2OBJ = TCPmechod.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o
+S1OBJ = TCPdaytimed.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
+S2OBJ = TCPmechod.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
+S3OBJ = TCPdaytimed_fifo.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
 
-EXE = np_simple np_single_proc
+EXE = np_simple np_single_proc np_multi_proc
 
 all: ${EXE} precompile
 
@@ -30,6 +31,9 @@ np_simple: ${S1OBJ}
 
 np_single_proc: ${S2OBJ}
 	$(CXX) $(CPPFLAGS) $(S2OBJ) -o np_single_proc
+
+np_multi_proc: ${S3OBJ}
+	$(CXX) $(CPPFLAGS) $(S3OBJ) -o np_multi_proc
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@

@@ -203,6 +203,7 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 	}	
 	else if (m_flag == 5)
 	{
+		all.close_all();
 		for (int i=0; i< MaxForks; i++)
 		{
 			for (auto &j: all.get_child_proc(i))
@@ -328,6 +329,196 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					dup2(fd_5, STDOUT_FILENO);	
 					::close(fd_5);
 					fd_5 = -1;
+				}
+			}
+			else if (m_flag > 2)
+			{
+				if (!last)
+				{
+					int fd = new_fd.get_out();
+					if (fd != -1)
+					{
+						dup2(fd, STDOUT_FILENO);	
+					}
+				}
+				else
+				{
+					dup2(sock, STDOUT_FILENO);
+				}	
+			}
+			
+			// finish fd table reassignment, close it
+			m_pipe.close();
+			new_fd.close();
+			// execution
+			
+			char ** arg = parse_arg();
+	
+			if (m_flag == 3)
+			{
+				if (m_argv[0] == "printenv")
+					return printenv();
+				else if (m_argv[0] == "setenv")
+					return setenv();
+			}
+			else if (execvp(m_argv[0].c_str(), arg) < 0)
+			{
+					cerr << "Unknown command: [" << m_argv[0] << "]." << endl;
+					exit(0);
+			}
+	
+			return 0;
+		}
+	}
+	return 0;
+}
+
+int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last, int sock)
+{	
+	cout << "my flag: "<< m_flag << endl;
+	if (m_flag == 3)
+	{
+		if (m_argv[0] == "printenv")
+			return printenv();
+		else if (m_argv[0] == "setenv")
+			return setenv();
+	}	
+	else if (m_flag == 5)
+	{
+		all.close_all();
+		for (int i=0; i< MaxForks; i++)
+		{
+			for (auto &j: all.get_child_proc(i))
+			{
+				kill(j, SIGKILL);
+			}
+		}
+		//exit(0);	
+		return 0;
+	}
+	/*
+	else if (m_flag == -1)
+	{
+		env.who(sock);
+	}	
+	else if (m_flag == -2)
+	{
+		env.name(m_argv[0], sock);
+	}	
+	else if (m_flag == -3)
+	{
+		env.tell(m_argv[1], sock, std::stoi(m_argv[0]));
+	}	
+	else if (m_flag == -4)
+	{
+		env.yell(m_argv[0], sock);
+	}
+	*/	
+	else
+	{
+		string fd_5, fd_in;
+		int readfd, writefd;
+		/*
+		if (m_flag == -5)
+		{
+			fd_5 = env.get_out(sock, spec_pipe);
+			if ( (writefd = open(fd_5.c_str(), 1)) < 0)
+ 				printf("server: can't open write fifo: %s", fd_5.c_str()); 
+		}
+		
+		if (m_in)
+		{
+			fd_in = env.get_in(spec_pipe, sock);
+			if ( (readfd = open(fd_in.c_str(), 0)) < 0)
+ 				printf("server: can't open read fifo: %s", fd_in.c_str()); 
+		}
+		*/
+		m_pipe = all.get_pipe(0);
+		cout << "current out: "<< m_pipe.get_out() << endl;
+		Pipe_IO new_fd;
+		if (m_flag> -1&& m_flag < 2&& all.get_pipe(m_num).mode_on())
+		{
+			new_fd = all.get_pipe(m_num);
+		}
+		else
+			new_fd = Pipe_IO::create();
+		
+		// fork
+		pid_t child_pid = fork();
+		if (child_pid < 0)
+			return 1;
+		// parent proc.
+		else if (child_pid > 0)
+		{
+			// child will do the job, close it
+			if (m_flag == -5)
+			{
+				::close(writefd);
+				writefd = -1;
+			}
+			if (m_in)
+			{
+				::close(readfd);
+				readfd = -1;
+			}
+			m_pipe.close();
+			all.set_pipe(m_num, new_fd);
+			all.add_process(m_num, child_pid);
+			return 0;
+		}
+		// child proc.
+		else 
+		{
+			// deal with in table
+			if (!first)
+			{
+				int fd = m_pipe.get_in();
+				if (fd != -1)
+				{
+					dup2(fd, STDIN_FILENO);
+				}
+			}
+			else if (m_in)
+			{
+				if (readfd != -1)
+				{
+					dup2(readfd, STDIN_FILENO);
+					::close(readfd);
+					readfd = -1;
+				}
+			}
+			
+			//deal with out table
+			// case 1: !N (0)
+			if (m_flag == 0)
+			{
+				auto fd = new_fd.get_out();
+				if (fd != -1)
+					dup2(fd, STDERR_FILENO);
+				if (fd != -1)
+					dup2(fd, STDOUT_FILENO);
+			}
+			// case 2: |N (1)
+			else if (m_flag == 1)
+			{
+				auto fd = new_fd.get_out();
+				if (fd != -1)
+				{
+					dup2(fd, STDOUT_FILENO);
+				}
+			}
+			else if (m_flag == 2)
+			{
+				int fd_file = open(m_filename.c_str(), (O_RDWR | O_CREAT | O_TRUNC), 0644);
+				dup2(fd_file, STDOUT_FILENO);
+			}
+			else if (m_flag == -5)
+			{
+				if (writefd != -1)
+				{
+					dup2(writefd, STDOUT_FILENO);	
+					::close(writefd);
+					writefd = -1;
 				}
 			}
 			else if (m_flag > 2)

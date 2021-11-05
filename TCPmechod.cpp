@@ -93,6 +93,7 @@ main(int argc, char *argv[])
 					fd_user.erase(fd);
 					close(fd);
 					FD_CLR(fd, &afds);
+					memcpy(&rfds, &afds, sizeof(rfds));
 				}
 			}
 	}

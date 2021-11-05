@@ -60,7 +60,6 @@ class Broadcast
 public:
 	vector<string> users;
 	int smallest;
-	int smallest_2;
 	vector<string> ip;
 	vector<string> ports;
 	vector<int> socket;
@@ -86,6 +85,52 @@ public:
 	int get_out(int fd, string cmd);
 };
 
+#define	MAXMESGDATA	(4096-16)
+#define	MESGHDRSIZE	(sizeof(Mesg) - MAXMESGDATA)
+typedef struct {
+  int	mesg_len;	/* #bytes in mesg_data, can be 0 or > 0 */
+  long	mesg_type;	/* message type, must be > 0 */
+  char	mesg_data[MAXMESGDATA];
+} Mesg;
+class BrstShrd
+{
+public:
+	key_t			shr_key1;		// shared memory
+	Mesg	*		users;			// ptr to message structure
+	key_t			shr_key2;		// shared memory
+	Mesg	*		ip;				// ptr to message structure
+	key_t			shr_key3;		// shared memory
+	Mesg	*		port;			// ptr to message structure
+	key_t			shr_key4;		// shared memory
+	Mesg	*		socket;			// ptr to message structure
+	key_t			shr_key5;		// shared memory
+	Mesg	*		in_fd;			// ptr to message structure
+	key_t			shr_key6;		// shared memory
+	Mesg	*		out_fd;			// ptr to message structure
+	key_t			shr_key7;		// shared memory
+	Mesg	*		pipes;			// ptr to message structure
+	key_t			sem_key1;		// shared memory
+	key_t			sem_key2;		// shared memory
+	int 			clisem, servsem;
+public:
+	BrstShrd();
+	int add_user(sockaddr_in fsin, int sock);
+	/*
+	void change_name(string name, int idx){users[idx] = name;}
+	void welcome(int fd);
+	void login(int id);
+	void logout(int id);
+	void brst_msg();
+	void delete_user(int id);
+	void who(int fd);
+	void name(string new_, int fd);
+	void tell(string msg, int fd, int to_id);
+	void yell(string msg, int fd);
+	string get_in(string cmd, int fd);
+	string get_out(int fd, string cmd);
+	*/
+};
+
 class Pipe_block
 {
 private:
@@ -104,6 +149,7 @@ public:
 	Pipe_block();
 	int execute(Pipeline& all, bool first, bool last);
 	int execute_new(Broadcast& env, Pipeline& all, bool first, bool last, int sock);
+	int execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last, int sock);
 	void set_cnt(int num) {m_num = num;}
 	void set_flag(int flag) {m_flag = flag;}
 	void set_in(int in) {m_in = in;}
