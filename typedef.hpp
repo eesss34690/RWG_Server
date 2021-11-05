@@ -63,7 +63,7 @@ public:
 	vector<string> ip;
 	vector<string> ports;
 	vector<int> socket;
-	char sbuf[15000];
+	char    sbuf[15000];
 public:
 	vector<int> in_fd;
 	vector<int> out_fd;
@@ -134,15 +134,14 @@ public:
 class Pipe_block
 {
 private:
-	bool 		exist;
-	Pipe_IO     m_pipe;
+	Pipe_IO 	m_pipe;
 	int 		m_num;
 	int 		m_flag;
 	int 		m_in;
 	string 		m_filename;
 	string 		spec_pipe;
 	vector<string>	m_argv;
-	int printenv();
+	int printenv( int fd);
 	int setenv();
 	char ** parse_arg();
 public:

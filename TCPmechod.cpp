@@ -110,6 +110,7 @@ echo(Pipeline& all, int sock)
 	dup2(sock, STDERR_FILENO);
 	string 	input;
 	char in_char[15001];
+	char sym[] = "% ";
 	memset(&in_char, 0, sizeof in_char);
 	if (!read(sock, in_char, sizeof in_char)){
         for (int i=0; i< 2048; i++)
@@ -121,20 +122,24 @@ echo(Pipeline& all, int sock)
         return 0;
     }
 	input = in_char;
-    input.pop_back();
-    input.pop_back();
+	while (input.back() == '\r' || input.back() == '\n')
+	{
+		input.pop_back();
+	}
 	if(input.empty()) {
-		write(sock, "% ", 3);
+		write(sock, sym, strlen(sym));
 		return 1;
 	}
     Command cmd(input);
 	int first = true;
-    if (all.get_pipe(0).mode_on())
-    {
-        first = false;
-    }
+	if (all.get_pipe(0).mode_on())
+    	{
+        	first = false;
+    	}
+	cout << cmd.get_block().size()<<endl;
     for (int i=0; i< cmd.get_block().size(); i++)
     {
+	cout << "try on\n";
 		int status;
         while ( (status = cmd.get_block()[i].execute_new(user_pool, all, first\
             , (i == cmd.get_block().size() - 1)? true: false, sock)) == 1)  // fork error
@@ -159,7 +164,7 @@ echo(Pipeline& all, int sock)
     }
 	if (input == "exit")
 		return 0;
-	write(sock, "% ", 3);
+	write(sock, sym, strlen(sym));
 	all.get_pipe(0).close();
 	all.next_(); 
 	cout << "finished\n";

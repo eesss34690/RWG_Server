@@ -9,21 +9,21 @@ int		errexit(const char *format, ...);
 
 Pipe_block::Pipe_block()
 {
-	exist = false;
 	m_num = 0;
 	m_flag = 0;
 	m_in = 0;
 }
 
-int Pipe_block::printenv()
+int Pipe_block::printenv(int fd = 1)
 {
 	if (m_argv.size() < 2)
 		cerr << "Invalid arguments: printenv\n";
 	else
 	{
 		const char * env = getenv(m_argv[1].c_str());
+		cout << env <<endl;
 		if (env != NULL)
-			cout << env << endl;
+			write(fd, env, strlen(env));
 	}
 	return 0;
 }
@@ -100,6 +100,8 @@ int Pipe_block::execute(Pipeline& all, bool first, bool last)
 		{
 			// deal with fd table duplication
 			// case 1: !N (0)
+			if (m_pipe.mode_on())
+				dup2(m_pipe.get_in(), STDIN_FILENO);
 			if (m_flag == 0)
 			{
 				if (!first)
@@ -197,7 +199,7 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
-			return printenv();
+			return printenv(sock);
 		else if (m_argv[0] == "setenv")
 			return setenv();
 	}	

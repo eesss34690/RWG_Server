@@ -36,6 +36,7 @@ Command::Command( string cmd )
 		string single_cmd = separate_output(cmd, start_idx, end_idx);
 		auto space = find_char(single_cmd, ' ', 0);
 		string action = separate_output(single_cmd, 0, space);
+		cout << action << endl;
 		if (action == "tell" )
 		{
 			auto space_2 = find_char(single_cmd, ' ', space + 1);
@@ -138,6 +139,8 @@ Command::Command( string cmd )
 						continue;
 					argv.push_back(temp);
 				}
+				if (m_block.back().get_flag() == 0)
+					argv.pop_back();
 				if (m_block.back().get_flag() == 2)
 				{
 					argv.pop_back();

@@ -4,6 +4,7 @@
 #include <vector>
 #include "typedef.hpp"
 #include <algorithm>
+#include <stdio.h>
 
 int	errexit(const char *format, ...);
 using namespace std;
@@ -50,8 +51,9 @@ void Broadcast::welcome(int fd)
 {
     strcat(sbuf, "****************************************\n\
 ** Welcome to the information server. **\n\
-****************************************\n");
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+****************************************\n\0");
+    cout << sizeof sbuf << endl;
+    if ((write(fd, sbuf, strlen(sbuf) )) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
 }
@@ -64,7 +66,7 @@ void Broadcast::login(int id)
     strcat(sbuf, ip[id].c_str());
     strcat(sbuf, ":");
     strcat(sbuf, ports[id].c_str());
-    strcat(sbuf, ". ***\n");
+    strcat(sbuf, ". ***\n\0");
     brst_msg();
 }
 
@@ -78,11 +80,12 @@ void Broadcast::logout(int id)
 
 void Broadcast::brst_msg()
 {
+    cout << strlen(sbuf) << endl;
     for (auto &i: socket)
     {
         if (i != 0)
         {
-            if ((write(i, sbuf, sizeof sbuf)) < 0)
+            if ((write(i, sbuf, strlen(sbuf) )) < 0)
                 errexit ("write error brst\n");
         }
     }
@@ -116,7 +119,7 @@ void Broadcast::who(int fd)
             strcat(sbuf, "\n");
         }
     }
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+    if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
 }
@@ -129,7 +132,7 @@ void Broadcast::name(string new_, int fd)
         strcat(sbuf, new_.c_str());
         strcat(sbuf, "' already exists. ***\n");
 
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);
     }
@@ -157,7 +160,7 @@ void Broadcast::tell(string msg, int fd, int to_id)
         strcat(sbuf, std::to_string(to_id).c_str());
         strcat(sbuf, "does not existyet. ***\n");
 
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);
     }
@@ -171,7 +174,7 @@ void Broadcast::tell(string msg, int fd, int to_id)
         strcat(sbuf, msg.c_str());
         strcat(sbuf, "\n");
         
-        if ((write(socket[to_id - 1], sbuf, sizeof sbuf)) < 0)
+        if ((write(socket[to_id - 1], sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);        
     }
@@ -202,7 +205,7 @@ int Broadcast::get_out(int fd, string cmd)
         strcat(sbuf, "*** Error: user #");
         strcat(sbuf, std::to_string(id_to).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);   
         return -1;
@@ -221,7 +224,7 @@ int Broadcast::get_out(int fd, string cmd)
             strcat(sbuf, std::to_string(id_to + 1).c_str());
             strcat(sbuf, " already exists. ***\n");
             cont = false;
-            if ((write(fd, sbuf, sizeof sbuf)) < 0)
+            if ((write(fd, sbuf, strlen(sbuf))) < 0)
                 errexit ("write error brst\n");
             memset(&sbuf, 0, sizeof sbuf);   
             return -1;
@@ -267,7 +270,7 @@ int Broadcast::get_in(string cmd, int fd)
         strcat(sbuf, "*** Error: user #");
         strcat(sbuf, std::to_string(id_to).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);   
         return -1;
@@ -291,7 +294,7 @@ int Broadcast::get_in(string cmd, int fd)
             strcat(sbuf, cmd.c_str());
             strcat(sbuf, "' ***\n");
             brst_msg();
-            memset(&sbuf, 0, sizeof sbuf); 
+            memset(&sbuf, 0, strlen(sbuf)); 
 
             int temp = pipes[i].get_in();
 
@@ -307,11 +310,12 @@ int Broadcast::get_in(string cmd, int fd)
     strcat(sbuf, "->#");
     strcat(sbuf, std::to_string(id_to).c_str());
     strcat(sbuf, " does not exist yet. ***\n");
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+    if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);  
              
     return -1;
     
 }
+
 

@@ -28,7 +28,8 @@ int shell(int fd){
             ::exit(0);
             return 0;
             }
-        input.pop_back();
+	if (input.back() == '\n' || input.back() == '\r')
+		input.pop_back();
         if(input.empty()) continue;
         Command cmd(input);
 
