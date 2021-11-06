@@ -255,18 +255,18 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 	}	
 	else
 	{
-		int fd_5, fd_in;
-		if (m_flag == -5)
-		{
-			fd_5 = env.get_out(sock, spec_pipe);
-		}
-		
+		int fd_5, fd_in;	
 		if (m_in)
 		{
 			fd_in = env.get_in(spec_pipe, sock);
 			if (fd_in == -1)
 				return 0;
 		}
+		if (m_flag == -5)
+		{
+			fd_5 = env.get_out(sock, spec_pipe);
+		}
+	
 		
 		m_pipe = all.get_pipe(0);
 		cout << "current out: "<< m_pipe.get_out() << endl;

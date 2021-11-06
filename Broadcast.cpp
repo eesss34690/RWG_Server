@@ -103,6 +103,17 @@ void Broadcast::delete_user(int id)
     ports[id] = "";
     env[id].clear();
     socket[id] = 0;
+    for (int i = 0; i< in_fd.size();)
+    {
+        if (in_fd[i] == id || out_fd[i] == id)
+        {
+            in_fd.erase(in_fd.begin() + i);
+            out_fd.erase(out_fd.begin() + i);
+            pipes.erase(pipes.begin() + i);
+        }
+        else
+            i++;
+    }
 }
 
 void Broadcast::who(int fd)
@@ -319,11 +330,11 @@ int Broadcast::get_in(string cmd, int fd)
             strcat(sbuf, "*** ");
             strcat(sbuf, users[id_to].c_str());
             strcat(sbuf, " (#");
-            strcat(sbuf, std::to_string(id_fm + 1).c_str());
+            strcat(sbuf, std::to_string(id_to + 1).c_str());
             strcat(sbuf, ") just received from ");
             strcat(sbuf, users[id_fm].c_str());
             strcat(sbuf, " (#");
-            strcat(sbuf, std::to_string(id_to + 1).c_str());
+            strcat(sbuf, std::to_string(id_fm + 1).c_str());
             strcat(sbuf, ") by '");
             strcat(sbuf, cmd.c_str());
             strcat(sbuf, "' ***\n");

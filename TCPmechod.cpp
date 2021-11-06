@@ -54,13 +54,13 @@ main(int argc, char *argv[])
 
 	msock = passiveTCP(service, QLEN);
 
-	nfds = 33;
+	nfds = 100;
 	FD_ZERO(&afds);
 	FD_SET(msock, &afds);
 
 	while (1) {
 		memcpy(&rfds, &afds, sizeof(rfds));
-		while (select(nfds, &rfds, (fd_set *)0, (fd_set *)0,
+		while (select(nfds + 1, &rfds, (fd_set *)0, (fd_set *)0,
 				(struct timeval *)0) < 0)
 				{
 					if (errno == 4)
@@ -137,10 +137,8 @@ echo(Pipeline& all, int sock)
     	{
         	first = false;
     	}
-	cout << cmd.get_block().size()<<endl;
     for (int i=0; i< cmd.get_block().size(); i++)
     {
-	cout << "try on\n";
 		int status;
         while ( (status = cmd.get_block()[i].execute_new(user_pool, all, first\
             , (i == cmd.get_block().size() - 1)? true: false, sock)) == 1)  // fork error
@@ -168,6 +166,5 @@ echo(Pipeline& all, int sock)
 	write(sock, sym, strlen(sym));
 	all.get_pipe(0).close();
 	all.next_(); 
-	cout << "finished\n";
 	return 1;
 }
