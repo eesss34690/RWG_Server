@@ -79,7 +79,7 @@ main(int argc, char *argv[])
 			fd_user[ssock] = user_pool.add_user(fsin, ssock);
 			user_pool.welcome(ssock);
 			user_pool.login(fd_user[ssock]);
-			write(ssock, "% ", 3);
+			write(ssock, "% ", strlen("% "));
 			dup2(ssock, env[fd_user[ssock]].get_pipe(0).get_in());
 			FD_SET(ssock, &afds);
 		}

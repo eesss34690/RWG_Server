@@ -14,6 +14,7 @@ Broadcast::Broadcast()
     users.resize(30);
     ip.resize(30);
     ports.resize(30); 
+    env.resize(30);
     socket.resize(30);
     in_fd.resize(0);
     out_fd.resize(0); 

@@ -63,6 +63,7 @@ public:
 	vector<string> ip;
 	vector<string> ports;
 	vector<int> socket;
+	vector<vector<pair<string, string>>> env;
 	char    sbuf[15000];
 public:
 	vector<int> in_fd;
