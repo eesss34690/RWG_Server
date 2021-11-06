@@ -68,21 +68,6 @@ main(int argc, char *argv[])
 					errexit("select: %s\n", strerror(errno));
 				}
 			
-		for (fd=0; fd<nfds; ++fd)
-			if (fd != msock && FD_ISSET(fd, &rfds))
-			{
-				user_pool.shift_env(fd_user[fd]);
-				/* In the child process: */
-				if (echo(env[fd_user[fd]], fd) == 0) {
-					user_pool.logout(fd_user[fd]);
-					user_pool.delete_user(fd_user[fd]);
-					fd_user.erase(fd);
-					close(fd);
-					FD_CLR(fd, &afds);
-					memcpy(&rfds, &afds, sizeof(rfds));
-				}
-			}
-
 		if (FD_ISSET(msock, &rfds)) {
 			int	ssock;
 
@@ -97,8 +82,22 @@ main(int argc, char *argv[])
 			write(ssock, "% ", strlen("% "));
 			dup2(ssock, env[fd_user[ssock]].get_pipe(0).get_in());
 			FD_SET(ssock, &afds);
-			memcpy(&rfds, &afds, sizeof(rfds));
 		}
+		
+		for (fd=0; fd<nfds; ++fd)
+			if (fd != msock && FD_ISSET(fd, &rfds))
+			{
+				user_pool.shift_env(fd_user[fd]);
+				/* In the child process: */
+				if (echo(env[fd_user[fd]], fd) == 0) {
+					user_pool.logout(fd_user[fd]);
+					user_pool.delete_user(fd_user[fd]);
+					fd_user.erase(fd);
+					close(fd);
+					FD_CLR(fd, &afds);
+				}
+			}
+
 	}
 }
 
