@@ -237,7 +237,7 @@ int Broadcast::get_out(int fd, string cmd)
     if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
     {
         strcat(sbuf, "*** Error: user #");
-        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, std::to_string(id_to + 1).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
         if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
@@ -302,7 +302,7 @@ int Broadcast::get_in(string cmd, int fd)
     if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
     {
         strcat(sbuf, "*** Error: user #");
-        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, std::to_string(id_fm + 1).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
         if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
@@ -340,9 +340,9 @@ int Broadcast::get_in(string cmd, int fd)
     }
 
     strcat(sbuf, "*** Error: the pipe #");
-    strcat(sbuf, std::to_string(id_fm).c_str());
+    strcat(sbuf, std::to_string(id_fm + 1).c_str());
     strcat(sbuf, "->#");
-    strcat(sbuf, std::to_string(id_to).c_str());
+    strcat(sbuf, std::to_string(id_to + 1).c_str());
     strcat(sbuf, " does not exist yet. ***\n");
     if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");

@@ -264,6 +264,8 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 		if (m_in)
 		{
 			fd_in = env.get_in(spec_pipe, sock);
+			if (fd_in == -1)
+				return 0;
 		}
 		
 		m_pipe = all.get_pipe(0);
@@ -313,12 +315,12 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 			}
 			else if (m_in)
 			{
-				if (fd_in != -1)
-				{
+				//if (fd_in != -1)
+				//{
 					dup2(fd_in, STDIN_FILENO);
 					::close(fd_in);
 					fd_in = -1;
-				}
+				//}
 			}
 			
 			//deal with out table
@@ -354,6 +356,10 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					dup2(fd_5, STDOUT_FILENO);	
 					::close(fd_5);
 					fd_5 = -1;
+				}
+				else
+				{
+					std::cout.rdbuf( NULL );
 				}
 				dup2(sock, STDERR_FILENO);
 			}
