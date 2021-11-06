@@ -36,7 +36,7 @@ Command::Command( string cmd )
 		string single_cmd = separate_output(cmd, start_idx, end_idx);
 		auto space = find_char(single_cmd, ' ', 0);
 		string action = separate_output(single_cmd, 0, space);
-		cout << action << endl;
+		//cout << action << endl;
 		if (action == "tell" )
 		{
 			auto space_2 = find_char(single_cmd, ' ', space + 1);

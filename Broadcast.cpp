@@ -20,6 +20,7 @@ Broadcast::Broadcast()
     out_fd.resize(0); 
     pipes.resize(0);
     smallest = 0;
+    cur = 0;
     memset(&sbuf, 0, sizeof sbuf);
 }
 
@@ -30,6 +31,7 @@ int Broadcast::add_user(sockaddr_in fsin, int sock)
     ip[smallest] = inet_ntoa(fsin.sin_addr);
     ports[smallest] = std::to_string((int)ntohs(fsin.sin_port));
     socket[smallest] = sock;
+    env[smallest].push_back(make_pair("PATH","bin:."));
     return smallest;
 }
 
@@ -77,6 +79,7 @@ void Broadcast::logout(int id)
     strcat(sbuf, users[id].c_str());
     strcat(sbuf, "' left. ***\n");
     brst_msg();
+
 }
 
 void Broadcast::brst_msg()
@@ -98,6 +101,7 @@ void Broadcast::delete_user(int id)
     users[id] = "";
     ip[id] = "";
     ports[id] = "";
+    env[id].clear();
     socket[id] = 0;
 }
 
@@ -123,6 +127,32 @@ void Broadcast::who(int fd)
     if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
+}
+
+void Broadcast::update_env(string name, string val, int fd)
+{
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+    bool add = true;
+    for (auto &i: env[id])
+    {
+        if (i.first == name)
+        {
+            add = false;
+            i.second = val;
+            break;
+        }
+    }
+    if (add)
+        env[id].push_back(make_pair(name, val));
+}
+
+void Broadcast::shift_env(int id)
+{
+    for (auto &i: env[cur])
+        ::unsetenv(i.first.c_str());
+    cur = id;
+    for (auto &i: env[id])
+        ::setenv(i.first.c_str(), i.second.c_str(), 1);
 }
 
 void Broadcast::name(string new_, int fd)

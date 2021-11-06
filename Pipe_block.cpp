@@ -14,6 +14,18 @@ Pipe_block::Pipe_block()
 	m_in = 0;
 }
 
+int Pipe_block::setenv_sin(Broadcast& env, int sock)
+{
+	if (m_argv.size() < 3)
+		cerr << "Invalid arguments: setenv\n";
+	else
+	{
+		::setenv(m_argv[1].c_str(), m_argv[2].c_str(), 1);
+		env.update_env(m_argv[1], m_argv[2], sock);
+	}
+	return 0;
+}
+
 int Pipe_block::printenv(int fd = 1)
 {
 	if (m_argv.size() < 2)
@@ -21,9 +33,18 @@ int Pipe_block::printenv(int fd = 1)
 	else
 	{
 		const char * env = getenv(m_argv[1].c_str());
-		cout << env <<endl;
 		if (env != NULL)
-			write(fd, env, strlen(env));
+		{
+			//cout << env <<endl;
+			if (fd != 1)
+			{
+				write(fd, env, strlen(env));
+				write(fd, "\n", strlen("\n"));
+			}
+			else
+				cout << env << endl;
+
+		}
 	}
 	return 0;
 }
@@ -201,7 +222,7 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 		if (m_argv[0] == "printenv")
 			return printenv(sock);
 		else if (m_argv[0] == "setenv")
-			return setenv();
+			return setenv_sin(env, sock);
 	}	
 	else if (m_flag == 5)
 	{

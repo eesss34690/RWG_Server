@@ -60,6 +60,7 @@ class Broadcast
 public:
 	vector<string> users;
 	int smallest;
+	int cur;
 	vector<string> ip;
 	vector<string> ports;
 	vector<int> socket;
@@ -77,6 +78,8 @@ public:
 	void login(int id);
 	void logout(int id);
 	void brst_msg();
+	void update_env(string name, string val, int sock);
+	void shift_env(int id);
 	void delete_user(int id);
 	void who(int fd);
 	void name(string new_, int fd);
@@ -144,6 +147,7 @@ private:
 	vector<string>	m_argv;
 	int printenv( int fd);
 	int setenv();
+	int setenv_sin(Broadcast& env, int sock);
 	char ** parse_arg();
 public:
 	Pipe_block();

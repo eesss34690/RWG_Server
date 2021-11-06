@@ -86,6 +86,7 @@ main(int argc, char *argv[])
 		for (fd=0; fd<nfds; ++fd)
 			if (fd != msock && FD_ISSET(fd, &rfds))
 			{
+				user_pool.shift_env(fd_user[fd]);
 				/* In the child process: */
 				if (echo(env[fd_user[fd]], fd) == 0) {
 					user_pool.logout(fd_user[fd]);
