@@ -339,11 +339,13 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 				{
 					dup2(fd, STDOUT_FILENO);
 				}
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag == 2)
 			{
 				int fd_file = open(m_filename.c_str(), (O_RDWR | O_CREAT | O_TRUNC), 0644);
 				dup2(fd_file, STDOUT_FILENO);
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag == -5)
 			{
@@ -353,6 +355,7 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					::close(fd_5);
 					fd_5 = -1;
 				}
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag > 2)
 			{
@@ -361,12 +364,14 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 					int fd = new_fd.get_out();
 					if (fd != -1)
 					{
-						dup2(fd, STDOUT_FILENO);	
+						dup2(fd, STDOUT_FILENO);
+						dup2(sock, STDERR_FILENO);	
 					}
 				}
 				else
 				{
 					dup2(sock, STDOUT_FILENO);
+					dup2(sock, STDERR_FILENO);
 				}	
 			}
 			

@@ -38,7 +38,7 @@ int Broadcast::add_user(sockaddr_in fsin, int sock)
 void Broadcast::update_small()
 {
     int i = smallest;
-    for (i = smallest; i < 30; i++)
+    for (i = 0; i < 30; i++)
     {
         if (users[i] == "")
         {
@@ -120,7 +120,10 @@ void Broadcast::who(int fd)
             strcat(sbuf, ":");
             strcat(sbuf, ports[i].c_str());
             if (fd == socket[i])
+            {
+                strcat(sbuf, "\t");
                 strcat(sbuf, "<-me");
+            }
             strcat(sbuf, "\n");
         }
     }

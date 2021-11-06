@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 
 	msock = passiveTCP(service, QLEN);
 
-	nfds = 31;
+	nfds = 33;
 	FD_ZERO(&afds);
 	FD_SET(msock, &afds);
 
@@ -68,21 +68,6 @@ main(int argc, char *argv[])
 					errexit("select: %s\n", strerror(errno));
 				}
 			
-		if (FD_ISSET(msock, &rfds)) {
-			int	ssock;
-
-			alen = sizeof(fsin);
-			ssock = accept(msock, (struct sockaddr *)&fsin,&alen);
-			if (ssock < 0)
-				errexit("accept: %s\n",
-					strerror(errno));
-			fd_user[ssock] = user_pool.add_user(fsin, ssock);
-			user_pool.welcome(ssock);
-			user_pool.login(fd_user[ssock]);
-			write(ssock, "% ", strlen("% "));
-			dup2(ssock, env[fd_user[ssock]].get_pipe(0).get_in());
-			FD_SET(ssock, &afds);
-		}
 		for (fd=0; fd<nfds; ++fd)
 			if (fd != msock && FD_ISSET(fd, &rfds))
 			{
@@ -97,6 +82,23 @@ main(int argc, char *argv[])
 					memcpy(&rfds, &afds, sizeof(rfds));
 				}
 			}
+
+		if (FD_ISSET(msock, &rfds)) {
+			int	ssock;
+
+			alen = sizeof(fsin);
+			ssock = accept(msock, (struct sockaddr *)&fsin,&alen);
+			if (ssock < 0)
+				errexit("accept: %s\n",
+					strerror(errno));
+			fd_user[ssock] = user_pool.add_user(fsin, ssock);
+			user_pool.welcome(ssock);
+			user_pool.login(fd_user[ssock]);
+			write(ssock, "% ", strlen("% "));
+			dup2(ssock, env[fd_user[ssock]].get_pipe(0).get_in());
+			FD_SET(ssock, &afds);
+			memcpy(&rfds, &afds, sizeof(rfds));
+		}
 	}
 }
 
@@ -108,7 +110,6 @@ int
 echo(Pipeline& all, int sock)
 {
 	std::cout << "now sock is: " << sock << endl;
-	dup2(sock, STDERR_FILENO);
 	string 	input;
 	char in_char[15001];
 	char sym[] = "% ";
