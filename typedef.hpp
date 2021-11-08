@@ -89,50 +89,42 @@ public:
 	int get_out(int fd, string cmd);
 };
 
-#define	MAXMESGDATA	(4096-16)
-#define	MESGHDRSIZE	(sizeof(Mesg) - MAXMESGDATA)
-typedef struct {
-  int	mesg_len;	/* #bytes in mesg_data, can be 0 or > 0 */
-  long	mesg_type;	/* message type, must be > 0 */
-  char	mesg_data[MAXMESGDATA];
-} Mesg;
 class BrstShrd
 {
 public:
-	key_t			shr_key1;		// shared memory
-	Mesg	*		users;			// ptr to message structure
-	key_t			shr_key2;		// shared memory
-	Mesg	*		ip;				// ptr to message structure
-	key_t			shr_key3;		// shared memory
-	Mesg	*		port;			// ptr to message structure
-	key_t			shr_key4;		// shared memory
-	Mesg	*		socket;			// ptr to message structure
-	key_t			shr_key5;		// shared memory
-	Mesg	*		in_fd;			// ptr to message structure
-	key_t			shr_key6;		// shared memory
-	Mesg	*		out_fd;			// ptr to message structure
-	key_t			shr_key7;		// shared memory
-	Mesg	*		pipes;			// ptr to message structure
-	key_t			sem_key1;		// shared memory
-	key_t			sem_key2;		// shared memory
-	int 			clisem, servsem;
+	vector<string> users;
+	int smallest;
+	int cur;
+	int clisem;
+	key_t key1;
+	vector<string> ip;
+	vector<string> ports;
+	vector<int> socket;
+	vector<vector<pair<string, string>>> env;
+	char    sbuf[15000];
+	vector<int> in_user;
+	vector<int> out_user;
+	vector<int> in_fd;
+	vector<int> out_fd;
+	vector<string> pipes;
 public:
 	BrstShrd();
 	int add_user(sockaddr_in fsin, int sock);
-	/*
+	void update_small();
 	void change_name(string name, int idx){users[idx] = name;}
 	void welcome(int fd);
 	void login(int id);
 	void logout(int id);
 	void brst_msg();
+	void update_env(string name, string val, int sock);
+	void shift_env(int id);
 	void delete_user(int id);
 	void who(int fd);
 	void name(string new_, int fd);
 	void tell(string msg, int fd, int to_id);
 	void yell(string msg, int fd);
-	string get_in(string cmd, int fd);
-	string get_out(int fd, string cmd);
-	*/
+	int get_in(string cmd, int fd);
+	int get_out(int fd, string cmd);
 };
 
 class Pipe_block
@@ -148,6 +140,7 @@ private:
 	int printenv( int fd);
 	int setenv();
 	int setenv_sin(Broadcast& env, int sock);
+	int setenv_fifo(BrstShrd& env, int sock);
 	char ** parse_arg();
 public:
 	Pipe_block();

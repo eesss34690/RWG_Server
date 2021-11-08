@@ -1,4 +1,3 @@
-CC = g++
 CXX = clang++
 
 # DO NOT DELETE THIS LINE - maketd DEPENDS ON IT
@@ -14,26 +13,27 @@ ifeq ($(UNAME_S),Darwin)
 	SRC=/bin
 endif
 
-CPPFLAGS = -Wall -O2 -DDEBUG -g -pedantic -std=c++11 -I$I/netinet/in.h -I$I/stdio.h -I$S/types.h
+CPPFLAGS = -Wall -O2 -DDEBUG -g -pedantic -pthread -std=c++11 -I$I/netinet/in.h -I$I/stdio.h -I$S/types.h
 
 CFLAGS = ${DEFS} ${INCLUDE}
 
-S1OBJ = TCPdaytimed.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
-S2OBJ = TCPmechod.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
-S3OBJ = TCPdaytimed_fifo.o passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
+DEPEND = passiveTCP.o passivesock.o errexit.o shell.o Pipe_block.o Command.o Pipe_IO.o Pipeline.o Broadcast.o BrstShrd.o semaphore.o
+S1OBJ = np_simple.o ${DEPEND}
+S2OBJ = np_single_proc.o ${DEPEND}
+S3OBJ = np_multi_proc.o ${DEPEND}
 
 EXE = np_simple np_single_proc np_multi_proc
 
 all: ${EXE} precompile
 
 np_simple: ${S1OBJ}
-	$(CXX) $(CPPFLAGS) $(S1OBJ) -o np_simple
+	$(CXX) $(CPPFLAGS) $(S1OBJ) -o $@
 
 np_single_proc: ${S2OBJ}
-	$(CXX) $(CPPFLAGS) $(S2OBJ) -o np_single_proc
+	$(CXX) $(CPPFLAGS) $(S2OBJ) -o $@
 
 np_multi_proc: ${S3OBJ}
-	$(CXX) $(CPPFLAGS) $(S3OBJ) -o np_multi_proc
+	$(CXX) $(CPPFLAGS) $(S3OBJ) -o $@
 
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@
@@ -47,4 +47,4 @@ precompile: ./cmds/noop.cpp ./cmds/number.cpp ./cmds/removetag.cpp ./cmds/remove
 	$(CXX) ./cmds/removetag0.cpp -o ./bin/removetag0
 
 clean:
-	rm -f Makefile.bak a.out core errs ${EXE} *.o 
+	rm -f Makefile.bak ${EXE} *.o 

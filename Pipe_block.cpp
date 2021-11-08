@@ -26,6 +26,18 @@ int Pipe_block::setenv_sin(Broadcast& env, int sock)
 	return 0;
 }
 
+int Pipe_block::setenv_fifo(BrstShrd& env, int sock)
+{
+	if (m_argv.size() < 3)
+		cerr << "Invalid arguments: setenv\n";
+	else
+	{
+		::setenv(m_argv[1].c_str(), m_argv[2].c_str(), 1);
+		env.update_env(m_argv[1], m_argv[2], sock);
+	}
+	return 0;
+}
+
 int Pipe_block::printenv(int fd = 1)
 {
 	if (m_argv.size() < 2)
@@ -216,7 +228,6 @@ int Pipe_block::execute(Pipeline& all, bool first, bool last)
 
 int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last, int sock)
 {	
-	cout << "my flag: "<< m_flag << endl;
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
@@ -260,11 +271,13 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 		{
 			fd_in = env.get_in(spec_pipe, sock);
 			if (fd_in == -1)
-				return 0;
+				fd_in = open("/dev/null", O_RDWR);
 		}
 		if (m_flag == -5)
 		{
 			fd_5 = env.get_out(sock, spec_pipe);
+			if (fd_5 == -1)
+				fd_5 = open("/dev/null", O_RDWR);
 		}
 	
 		
@@ -315,12 +328,9 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 			}
 			else if (m_in)
 			{
-				//if (fd_in != -1)
-				//{
-					dup2(fd_in, STDIN_FILENO);
+				dup2(fd_in, STDIN_FILENO);
 					::close(fd_in);
 					fd_in = -1;
-				//}
 			}
 			
 			//deal with out table
@@ -351,16 +361,9 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 			}
 			else if (m_flag == -5)
 			{
-				if (fd_5 != -1)
-				{
-					dup2(fd_5, STDOUT_FILENO);	
-					::close(fd_5);
-					fd_5 = -1;
-				}
-				else
-				{
-					std::cout.rdbuf( NULL );
-				}
+				dup2(fd_5, STDOUT_FILENO);	
+				::close(fd_5);
+				fd_5 = -1;
 				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag > 2)
@@ -409,13 +412,14 @@ int Pipe_block::execute_new(Broadcast& env, Pipeline& all, bool first, bool last
 
 int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last, int sock)
 {	
-	cout << "my flag: "<< m_flag << endl;
+	cout << "my sock: "<< sock << endl;
+	env.shift_env(sock);
 	if (m_flag == 3)
 	{
 		if (m_argv[0] == "printenv")
-			return printenv();
+			return printenv(sock);
 		else if (m_argv[0] == "setenv")
-			return setenv();
+			return setenv_fifo(env, sock);
 	}	
 	else if (m_flag == 5)
 	{
@@ -427,10 +431,13 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 				kill(j, SIGKILL);
 			}
 		}
-		//exit(0);	
+		env.logout(sock);
+		env.delete_user(sock);
+		::close(sock);
+		sock = -1;
+		raise(SIGUSR2);
 		return 0;
 	}
-	/*
 	else if (m_flag == -1)
 	{
 		env.who(sock);
@@ -446,27 +453,24 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 	else if (m_flag == -4)
 	{
 		env.yell(m_argv[0], sock);
-	}
-	*/	
+	}	
 	else
 	{
-		string fd_5, fd_in;
-		int readfd, writefd;
-		/*
-		if (m_flag == -5)
-		{
-			fd_5 = env.get_out(sock, spec_pipe);
-			if ( (writefd = open(fd_5.c_str(), 1)) < 0)
- 				printf("server: can't open write fifo: %s", fd_5.c_str()); 
-		}
-		
+		int fd_5, fd_in;	
 		if (m_in)
 		{
 			fd_in = env.get_in(spec_pipe, sock);
-			if ( (readfd = open(fd_in.c_str(), 0)) < 0)
- 				printf("server: can't open read fifo: %s", fd_in.c_str()); 
+			if (fd_in == -1)
+				fd_in = open("/dev/null", O_RDWR);
 		}
-		*/
+		if (m_flag == -5)
+		{
+			fd_5 = env.get_out(sock, spec_pipe);
+			if (fd_5 == -1)
+				fd_5 = open("/dev/null", O_RDWR);
+		}
+	
+		
 		m_pipe = all.get_pipe(0);
 		cout << "current out: "<< m_pipe.get_out() << endl;
 		Pipe_IO new_fd;
@@ -487,13 +491,13 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 			// child will do the job, close it
 			if (m_flag == -5)
 			{
-				::close(writefd);
-				writefd = -1;
+				::close(fd_5);
+				fd_5 = -1;
 			}
 			if (m_in)
 			{
-				::close(readfd);
-				readfd = -1;
+				::close(fd_in);
+				fd_in = -1;
 			}
 			m_pipe.close();
 			all.set_pipe(m_num, new_fd);
@@ -514,12 +518,9 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 			}
 			else if (m_in)
 			{
-				if (readfd != -1)
-				{
-					dup2(readfd, STDIN_FILENO);
-					::close(readfd);
-					readfd = -1;
-				}
+				dup2(fd_in, STDIN_FILENO);
+				::close(fd_in);
+				fd_in = -1;
 			}
 			
 			//deal with out table
@@ -540,20 +541,20 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 				{
 					dup2(fd, STDOUT_FILENO);
 				}
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag == 2)
 			{
 				int fd_file = open(m_filename.c_str(), (O_RDWR | O_CREAT | O_TRUNC), 0644);
 				dup2(fd_file, STDOUT_FILENO);
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag == -5)
 			{
-				if (writefd != -1)
-				{
-					dup2(writefd, STDOUT_FILENO);	
-					::close(writefd);
-					writefd = -1;
-				}
+				dup2(fd_5, STDOUT_FILENO);	
+				::close(fd_5);
+				fd_5 = -1;
+				dup2(sock, STDERR_FILENO);
 			}
 			else if (m_flag > 2)
 			{
@@ -562,12 +563,14 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 					int fd = new_fd.get_out();
 					if (fd != -1)
 					{
-						dup2(fd, STDOUT_FILENO);	
+						dup2(fd, STDOUT_FILENO);
+						dup2(sock, STDERR_FILENO);	
 					}
 				}
 				else
 				{
 					dup2(sock, STDOUT_FILENO);
+					dup2(sock, STDERR_FILENO);
 				}	
 			}
 			

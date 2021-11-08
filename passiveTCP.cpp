@@ -16,17 +16,3 @@ int passiveTCP(const char *service, int qlen)
 {
 	return passivesock(service, "tcp", qlen);
 }
-
-/*------------------------------------------------------------------------
- * passiveUDP - create a passive socket for use in a UDP server
- *------------------------------------------------------------------------
- */
-int passiveUDP(const char *service, const char *transport)
-/*
- * Arguments:
- *      service - service associated with the desired port
- *      qlen    - maximum server request queue length
- */
-{
-	return passivesock_brst(service, "udp");
-}

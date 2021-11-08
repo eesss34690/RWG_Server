@@ -6,3 +6,5 @@ client
 bin/
 cmds/
 *.o
+__MACOSX
+.vscode

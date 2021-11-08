@@ -13,31 +13,43 @@
 #include <unordered_map>
 #include <sys/types.h> 
 #include <sys/ipc.h> 
-#include <sys/shm.h>
+#include <pthread.h>
 
 #include "typedef.hpp"
 
 extern int	errno;
 int		errexit(const char *format, ...);
 int		passiveTCP(const char *service, int qlen);
-vector<Pipeline> env(30);
+int     sem_open(key_t key);
+void    sem_wait(int id);
+void    sem_signal(int id);
+
 BrstShrd user_pool;
+unordered_map<int, int> fd_user;
+pthread_t   thread_[30];
 
-#define QLEN	5
+#define QLEN	31
 
-int shell_fifo(int fd);
+void *shell_fifo(void *sockfd);
+void *receive(void *arg);
+void *getout(void *arg);
 /*------------------------------------------------------------------------
  * main - Iterative TCP server for DAYTIME service
  *------------------------------------------------------------------------
  */
 int main(int argc, char *argv[])
 {
-	struct	sockaddr_in fsin;	/* the from address of a client	*/
-	char	*service = "8886";	/* service name or port number	*/
-	int	msock, ssock;		/* master & slave sockets	*/
-	socklen_t	alen;		/* from-address length		*/
-	pid_t   cpid;
-	unordered_map<int, int> fd_user;
+	struct	    sockaddr_in fsin;	/* the from address of a client	*/
+	char	    *service = "8886";	/* service name or port number	*/
+	int	        msock, ssock;		/* master & slave sockets	*/
+	socklen_t	alen;		        /* from-address length		*/
+	
+
+    signal(SIGUSR2, [](int signo) {
+        cout << "triggered\n";
+        pthread_join(thread_[user_pool.cur], NULL);
+        cout << "finished\n";
+    });
 
 	switch (argc) {
 	case	1:
@@ -53,41 +65,45 @@ int main(int argc, char *argv[])
 
 	while (1) {
 		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
+
 		fd_user[ssock] = user_pool.add_user(fsin, ssock);
-		//user_pool.welcome(ssock);
-		//user_pool.login(fd_user[ssock]);
-		dup2(ssock, env[fd_user[ssock]].get_pipe(0).get_in());
+
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-		cpid = fork();
-		if (cpid < 0) exit(1);  /* exit if fork() fails */
-		if ( cpid ) {
-			/* In the parent process: */
-			close( ssock ); /* csock is not needed in the parent after the fork */
-			//waitpid( cpid, NULL, 0 ); /* wait for and reap child process */
-		} else {
-			/* In the child process: */
-			//dup2( ssock, STDIN_FILENO );
-			//dup2( ssock, STDOUT_FILENO );  /* duplicate socket on stdout */
-			dup2( ssock, STDERR_FILENO );  /* duplicate socket on stderr too */
-			shell_fifo(ssock);
-			close(ssock);
-		}
+        pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
 	}
 }
 
-
-int shell_fifo(int fd){
+void *shell_fifo(void *sockfd){
     // change the fd of stdout to socket
- 
-    //setenv("PATH", "bin:.", 1);
+    int fd = *(int *)sockfd;
+    int clisem;
+    key_t sem_key2 = 8891;
+    if ( (clisem = sem_open(sem_key2)) < 0) 
+            errexit("...");
+
+    sem_wait(clisem);	
+    user_pool.welcome(fd);
+    user_pool.login(fd);
+    sem_signal(clisem);	
+
     Pipeline all;  
+    dup2(fd, all.get_pipe(0).get_in());
     string input;
     // set the signal handler
     signal(SIGCHLD, [](int signo) {
         int status;
         while (waitpid(-1, &status, WNOHANG) > 0);
     });
+
+    signal(SIGUSR1, [](int signo) {
+        pthread_t temp, temp2;
+        pthread_create(&temp, NULL, receive, NULL);
+        pthread_create(&temp2, NULL, getout, NULL);
+        pthread_join(temp, NULL);
+        pthread_join(temp2, NULL);
+    });
+
     while(1){
 		write(fd, "% ", 3);
         char in_char[15001];
@@ -100,11 +116,13 @@ int shell_fifo(int fd){
             }
             ::exit(0);
             return 0;
-            }
+        }
 		
 		input = in_char;
-        input.pop_back();
-        input.pop_back();
+        while (input.back() == '\r' || input.back() == '\n')
+        {
+            input.pop_back();
+        }
         if(input.empty()) continue;
         Command cmd(input);
 
@@ -135,10 +153,29 @@ int shell_fifo(int fd){
             int status;
             waitpid(i, &status, 0);
         }
-	all.next_(); 
-    
-
+        if (input == "exit")
+        {
+            fd_user.erase(fd);
+		    return NULL;
+        }
+	    all.next_(); 
     }
 
     return 0;
+}
+
+void *receive(void *arg)
+{
+    int readfd;
+    if ( (readfd = open(user_pool.pipes.back().c_str(), O_RDONLY, 0666)) < 0)
+		errexit("server: can't open read fifo: %s", user_pool.pipes.back().c_str());
+    user_pool.out_fd.push_back(readfd);
+}
+
+void *getout(void *arg)
+{
+    int writefd;
+    if ( (writefd = open(user_pool.pipes.back().c_str(), O_WRONLY, 0666)) < 0)
+		errexit("server: can't open write fifo: %s", user_pool.pipes.back().c_str());
+    user_pool.in_fd.push_back(writefd);
 }

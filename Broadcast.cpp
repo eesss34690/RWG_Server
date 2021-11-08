@@ -101,6 +101,8 @@ void Broadcast::delete_user(int id)
     users[id] = "";
     ip[id] = "";
     ports[id] = "";
+    for (auto &i: env[id])
+        ::unsetenv(i.first.c_str());
     env[id].clear();
     socket[id] = 0;
     for (int i = 0; i< in_fd.size();)
@@ -109,6 +111,7 @@ void Broadcast::delete_user(int id)
         {
             in_fd.erase(in_fd.begin() + i);
             out_fd.erase(out_fd.begin() + i);
+            pipes[i].close();
             pipes.erase(pipes.begin() + i);
         }
         else

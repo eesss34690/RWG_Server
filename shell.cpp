@@ -9,7 +9,7 @@ using namespace std;
 int shell(int fd){
     // change the fd of stdout to socket
  
-    //setenv("PATH", "bin:.", 1);
+    setenv("PATH", "bin:.", 1);
     Pipeline all;  
     string input;
     // set the signal handler
@@ -27,7 +27,7 @@ int shell(int fd){
             }
             ::exit(0);
             return 0;
-            }
+        }
 	if (input.back() == '\n' || input.back() == '\r')
 		input.pop_back();
         if(input.empty()) continue;
@@ -47,7 +47,6 @@ int shell(int fd){
             first = false;
             if (status != 0)
                 cerr << "Fail execution on" << cmd.get_block()[i].get_argv()[0] <<endl;
-            usleep(1500);
         }
         all.close(0);
 

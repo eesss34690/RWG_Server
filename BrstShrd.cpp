@@ -4,266 +4,139 @@
 #include <vector>
 #include "typedef.hpp"
 #include <algorithm>
-#include <sys/ipc.h>
-#include <sys/shm.h>
+#include <stdio.h>
 
-int	errexit(const char *format, ...);
-int sem_create(key_t key, int initval);
-void sem_wait(int id);
-void sem_signal(int id);
+int	    errexit(const char *format, ...);
+int		sem_create(key_t, int);
+void	sem_wait(int);
+void	sem_signal(int);
 using namespace std;
 
 BrstShrd::BrstShrd()
 {
-    char c;
-    int shmid;
-    shr_key1 = 8883;
-    shr_key2 = 8884;
-    shr_key3 = 8885;
-    shr_key4 = 8886;
-    shr_key5 = 8887;
-    shr_key6 = 8888;
-    shr_key7 = 8889;
-    sem_key1 = 8890;
-    sem_key2 = 8891;
-
-    // shared memory
-    if ((shmid = shmget(shr_key1, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((users = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        users->mesg_len = 0;
-        memset(&(users->mesg_data), 0, sizeof users->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key2, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((ip = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        ip->mesg_len = 0;
-        memset(&(ip->mesg_data), 0, sizeof ip->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key3, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((port = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        port->mesg_len = 0;
-        memset(&(port->mesg_data), 0, sizeof port->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key4, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((socket = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        socket->mesg_len = 0;
-        memset(&(socket->mesg_data), 0, sizeof socket->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key5, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((in_fd = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        in_fd->mesg_len = 0;
-        memset(&(in_fd->mesg_data), 0, sizeof in_fd->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key6, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((out_fd = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        out_fd->mesg_len = 0;
-        memset(&(out_fd->mesg_data), 0, sizeof out_fd->mesg_len);
-    }
-    // shared memory
-    if ((shmid = shmget(shr_key7, 15001, IPC_CREAT | 0666)) < 0) {
-        perror("shmget");
-        exit(1);
-    }
-    if ((pipes = (Mesg *) shmat(shmid, (char *) 0, 0)) == (Mesg *) -1) {
-        perror("shmat");
-        exit(1);
-    }
-    else
-    {
-        pipes->mesg_len = 0;
-        memset(&(pipes->mesg_data), 0, sizeof pipes->mesg_len);
-    }
-    // semaphore
-    if ( (clisem = sem_create(sem_key1, 1)) < 0) 
-        errexit("...");
-    if ( (servsem = sem_create(sem_key2, 0)) < 0) 
+    users.resize(30);
+    ip.resize(30);
+    ports.resize(30); 
+    env.resize(30);
+    socket.resize(30);
+    in_user.resize(0);
+    out_user.resize(0); 
+    in_fd.resize(0); 
+    out_fd.resize(0); 
+    pipes.resize(0);
+    smallest = 0;
+    cur = 0;
+    key1 = 8891;
+    memset(&sbuf, 0, sizeof sbuf);
+    if ( (clisem = sem_create(key1, 1)) < 0) 
         errexit("...");
 }
 
 int BrstShrd::add_user(sockaddr_in fsin, int sock)
 {
-    int	n, filefd;
-    char	errmesg[256], *sys_err_str();
+    sem_wait(clisem);
+    update_small();
+    users[smallest] = "(no name)";
+    ip[smallest] = inet_ntoa(fsin.sin_addr);
+    ports[smallest] = std::to_string((int)ntohs(fsin.sin_port));
+    socket[smallest] = sock;
+    env[smallest].push_back(make_pair("PATH","bin:."));
+    int temp = smallest;
+    sem_signal(clisem);
+    return temp;
+}
 
-    // Wait for the client to write the filename 
-    // into shared memory.
-    sem_wait(clisem);	/* Will wait here for client to start */
-    std::cout << users->mesg_len << "a\n";
-    int i = 1, idx = 0, cont = 0;
-    if (users->mesg_len == 0)
+void BrstShrd::update_small()
+{
+    int i = smallest;
+    for (i = 0; i < 30; i++)
     {
-        strcpy(users->mesg_data, "(no name)");
-        users->mesg_len = 10;
-    }
-    for (; i < users->mesg_len; i++)
-    {
-        if (users->mesg_data[i-1] == '\0' && users->mesg_data[i] == '\0')
+        if (users[i] == "")
         {
-            memmove(users->mesg_data + i + 10, users->mesg_data + i, users->mesg_len - i - 10);
-            users->mesg_data[i++] = '(';
-            cout <<i << users->mesg_data[i-1];
-            users->mesg_data[i++] = 'n';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = '0';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = ' ';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = 'n';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = 'a';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = 'm';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = 'e';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i++] = ')';
-            cout <<i  << users->mesg_data[i-1];
-            users->mesg_data[i] = '\0';
-            cont = 1;
+            smallest = i;
             break;
         }
-        else if (users->mesg_data[i-1] != '\0' && users->mesg_data[i] == '\0')
-            idx++;
     }
-    if (cont == 0)
-    {
-        ++i;
-        users->mesg_data[i++] = '(';
-        cout <<i << users->mesg_data[i-1];
-        users->mesg_data[i++] = 'n';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = '0';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = ' ';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = 'n';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = 'a';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = 'm';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = 'e';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i++] = ')';
-        cout <<i  << users->mesg_data[i-1];
-        users->mesg_data[i] = '\0';
-    }
-
-
-    users->mesg_len = (users->mesg_len > i)? users->mesg_len: i;
-    sem_signal(clisem);
-    cout << users->mesg_data <<"a\n";
-    //ip[smallest] = inet_ntoa(fsin.sin_addr);
-    //ports[smallest] = std::to_string((int)ntohs(fsin.sin_port));
-    //socket[smallest] = sock;
-    return idx;
+    if (i == 30)
+        std::cerr << "out of range users login\n";
 }
-/*
+
 void BrstShrd::welcome(int fd)
 {
     strcat(sbuf, "****************************************\n\
 ** Welcome to the information server. **\n\
-****************************************\n");
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+****************************************\n\0");
+    cout << sizeof sbuf << endl;
+    if ((write(fd, sbuf, strlen(sbuf) )) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
 }
 
-void BrstShrd::login(int id)
+void BrstShrd::login(int fd)
 {
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     strcat(sbuf, "*** User '");
     strcat(sbuf, users[id].c_str());
     strcat(sbuf, "' entered from ");
     strcat(sbuf, ip[id].c_str());
     strcat(sbuf, ":");
     strcat(sbuf, ports[id].c_str());
-    strcat(sbuf, ". ***\n");
+    strcat(sbuf, ". ***\n\0");
     brst_msg();
 }
 
-void BrstShrd::logout(int id)
+void BrstShrd::logout(int fd)
 {
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     strcat(sbuf, "*** User '");
     strcat(sbuf, users[id].c_str());
     strcat(sbuf, "' left. ***\n");
     brst_msg();
+
 }
 
 void BrstShrd::brst_msg()
 {
+    cout << strlen(sbuf) << endl;
     for (auto &i: socket)
     {
         if (i != 0)
         {
-            if ((write(i, sbuf, sizeof sbuf)) < 0)
+            if ((write(i, sbuf, strlen(sbuf) )) < 0)
                 errexit ("write error brst\n");
         }
     }
     memset(&sbuf, 0, sizeof sbuf);
 }
 
-void BrstShrd::delete_user(int id)
+void BrstShrd::delete_user(int fd)
 {
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     users[id] = "";
     ip[id] = "";
     ports[id] = "";
+    for (auto &i: env[id])
+        ::unsetenv(i.first.c_str());
+    env[id].clear();
     socket[id] = 0;
+    for (int i = 0; i< in_user.size();)
+    {
+        if (in_user[i] == id || out_user[i] == id)
+        {
+            in_user.erase(in_user.begin() + i);
+            out_user.erase(out_user.begin() + i);
+            in_fd.erase(in_fd.begin() + i);
+            out_fd.erase(out_fd.begin() + i);
+            pipes.erase(pipes.begin() + i);
+        }
+        else
+            i++;
+    }
 }
 
 void BrstShrd::who(int fd)
 {
+    sem_wait(clisem);
     strcat(sbuf, "<ID>\t<nickname>\t<IP:port>\t<indicate me>\n");
     for (int i = 0; i < 30; i ++)
     {
@@ -277,24 +150,58 @@ void BrstShrd::who(int fd)
             strcat(sbuf, ":");
             strcat(sbuf, ports[i].c_str());
             if (fd == socket[i])
+            {
+                strcat(sbuf, "\t");
                 strcat(sbuf, "<-me");
+            }
             strcat(sbuf, "\n");
         }
     }
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+    if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
+    sem_signal(clisem);
+}
+
+void BrstShrd::update_env(string name, string val, int fd)
+{
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+    bool add = true;
+    for (auto &i: env[id])
+    {
+        if (i.first == name)
+        {
+            add = false;
+            i.second = val;
+            break;
+        }
+    }
+    if (add)
+        env[id].push_back(make_pair(name, val));
+}
+
+void BrstShrd::shift_env(int fd)
+{
+    sem_wait(clisem);
+    int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
+    for (auto &i: env[cur])
+        ::unsetenv(i.first.c_str());
+    cur = id;
+    for (auto &i: env[id])
+        ::setenv(i.first.c_str(), i.second.c_str(), 1);
+    sem_signal(clisem);
 }
 
 void BrstShrd::name(string new_, int fd)
 {
+    sem_wait(clisem);
     if (std::find(users.begin(), users.end(), new_) != users.end()) 
     {
         strcat(sbuf, "*** User '");
         strcat(sbuf, new_.c_str());
         strcat(sbuf, "' already exists. ***\n");
 
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);
     }
@@ -310,19 +217,21 @@ void BrstShrd::name(string new_, int fd)
         strcat(sbuf, " is named '");
         strcat(sbuf, users[id].c_str());
         strcat(sbuf, "'. ***\n");
-        brst_msg();        
+        brst_msg();      
     }
+    sem_signal(clisem);  
 }
 
 void BrstShrd::tell(string msg, int fd, int to_id)
 {
+    sem_wait(clisem);
     if (users[to_id - 1] == "") 
     {
         strcat(sbuf, "*** Error: user #");
         strcat(sbuf, std::to_string(to_id).c_str());
         strcat(sbuf, "does not existyet. ***\n");
 
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);
     }
@@ -336,13 +245,15 @@ void BrstShrd::tell(string msg, int fd, int to_id)
         strcat(sbuf, msg.c_str());
         strcat(sbuf, "\n");
         
-        if ((write(socket[to_id - 1], sbuf, sizeof sbuf)) < 0)
+        if ((write(socket[to_id - 1], sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);        
     }
+    sem_signal(clisem);
 }
 void BrstShrd::yell(string msg, int fd)
 {
+    sem_wait(clisem);
     int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     strcat(sbuf, "*** ");
     strcat(sbuf, users[id].c_str());
@@ -350,9 +261,12 @@ void BrstShrd::yell(string msg, int fd)
     strcat(sbuf, msg.c_str());
     strcat(sbuf, "\n");
     brst_msg();
+    sem_signal(clisem);
 }
-string BrstShrd::get_out(int fd, string cmd)
+
+int BrstShrd::get_out(int fd, string cmd)
 {
+    sem_wait(clisem);
     auto ge_idx = cmd.find('>', 0) + 1;
     auto space = cmd.find(' ', ge_idx);
     
@@ -365,20 +279,22 @@ string BrstShrd::get_out(int fd, string cmd)
     if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
     {
         strcat(sbuf, "*** Error: user #");
-        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, std::to_string(id_to + 1).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
-        memset(&sbuf, 0, sizeof sbuf);   
-        return "";
+        memset(&sbuf, 0, sizeof sbuf);  
+        
+        sem_signal(clisem); 
+        return -1;
     }
 
     bool cont = true;
-    for (int i = 0; i < in_fd.size(); i++)
+    for (int i = 0; i < in_user.size(); i++)
     {
-        cout << "searching for " << in_fd[i] << " to " << out_fd[i] << endl;
+        cout << "searching for " << in_user[i] << " to " << out_user[i] << endl;
         // Do something with iter
-        if (out_fd[i] == id_to && in_fd[i] == id_fm)
+        if (out_user[i] == id_to && in_user[i] == id_fm)
         {
             strcat(sbuf, "*** Error: the pipe #");
             strcat(sbuf, std::to_string(id_fm + 1).c_str());
@@ -386,21 +302,24 @@ string BrstShrd::get_out(int fd, string cmd)
             strcat(sbuf, std::to_string(id_to + 1).c_str());
             strcat(sbuf, " already exists. ***\n");
             cont = false;
-            if ((write(fd, sbuf, sizeof sbuf)) < 0)
+            if ((write(fd, sbuf, strlen(sbuf))) < 0)
                 errexit ("write error brst\n");
             memset(&sbuf, 0, sizeof sbuf);   
-            return "";
+            sem_signal(clisem);
+            return -1;
         }
     }
     if (cont)
     {
-        // construct fifo
-        string cur = "/tmp/"+std::to_string(pipes.size() + 1);
-        if ( (mkfifo(cur.c_str(), 0666) < 0) && (errno != EEXIST) )
-            errexit("can't create fifo 1: %s", cur.c_str()); 
-        pipes.push_back(cur);
-        in_fd.push_back(id_fm);
-        out_fd.push_back(id_to);
+        string temp = "./user_pipe/" + std::to_string(id_fm) + "_" + std::to_string(id_to);
+        cout << temp << endl;
+        if ( (mkfifo(temp.c_str(), 0666) < 0) && (errno != EEXIST) )
+            errexit("can't create fifo 1: %s", temp.c_str()); 
+        pipes.push_back(temp);
+        in_user.push_back(id_fm);
+        out_user.push_back(id_to);
+        raise(SIGUSR1);
+        cout << "finished all\n";
         strcat(sbuf, "*** ");
         strcat(sbuf, users[id_fm].c_str());
         strcat(sbuf, " (#");
@@ -414,12 +333,15 @@ string BrstShrd::get_out(int fd, string cmd)
         strcat(sbuf, ") ***\n");
         brst_msg();
         memset(&sbuf, 0, sizeof sbuf); 
-        return cur;
+        int fdin = in_fd.back();
+        sem_signal(clisem);
+        return fdin;
     }
 }
 
-string BrstShrd::get_in(string cmd, int fd)
+int BrstShrd::get_in(string cmd, int fd)
 {
+    sem_wait(clisem);
     auto ge_idx = cmd.find('<', 0) + 1;
     auto space = cmd.find(' ', ge_idx);
     
@@ -432,54 +354,58 @@ string BrstShrd::get_in(string cmd, int fd)
     if (id_to > 29 || id_fm > 29 || users[id_fm] == "" || users[id_to] == "")
     {
         strcat(sbuf, "*** Error: user #");
-        strcat(sbuf, std::to_string(id_to).c_str());
+        strcat(sbuf, std::to_string(id_fm + 1).c_str());
         strcat(sbuf, " does not exist yet. ***\n");
-        if ((write(fd, sbuf, sizeof sbuf)) < 0)
+        if ((write(fd, sbuf, strlen(sbuf))) < 0)
             errexit ("write error brst\n");
         memset(&sbuf, 0, sizeof sbuf);   
-        return "";
+        sem_signal(clisem);
+        return -1;
     }
 
-    for (int i = 0; i < in_fd.size(); i++)
+    for (int i = 0; i < in_user.size(); i++)
     {
-        cout << "searching for " << in_fd[i] << " to " << out_fd[i] << endl;
+        cout << "searching for " << in_user[i] << " to " << out_user[i] << endl;
         // Do something with iter
-        if (out_fd[i] == id_to && in_fd[i] == id_fm)
+        if (out_user[i] == id_to && in_user[i] == id_fm)
         {
             strcat(sbuf, "*** ");
             strcat(sbuf, users[id_to].c_str());
             strcat(sbuf, " (#");
-            strcat(sbuf, std::to_string(id_fm + 1).c_str());
+            strcat(sbuf, std::to_string(id_to + 1).c_str());
             strcat(sbuf, ") just received from ");
             strcat(sbuf, users[id_fm].c_str());
             strcat(sbuf, " (#");
-            strcat(sbuf, std::to_string(id_to + 1).c_str());
+            strcat(sbuf, std::to_string(id_fm + 1).c_str());
             strcat(sbuf, ") by '");
             strcat(sbuf, cmd.c_str());
             strcat(sbuf, "' ***\n");
             brst_msg();
-            memset(&sbuf, 0, sizeof sbuf); 
+            memset(&sbuf, 0, strlen(sbuf)); 
 
-            string temp = pipes[i];
-
-            in_fd.erase(in_fd.begin() + i);
+            int readfd = out_fd[i];
+            in_user.erase(in_user.begin() + i);
+            out_user.erase(out_user.begin() + i);
+            in_fd.erase(out_fd.begin() + i);
             out_fd.erase(out_fd.begin() + i);
             pipes.erase(pipes.begin() + i);
-            return temp;
+            sem_signal(clisem);
+            return readfd;
         }
     }
 
     strcat(sbuf, "*** Error: the pipe #");
-    strcat(sbuf, std::to_string(id_fm).c_str());
+    strcat(sbuf, std::to_string(id_fm + 1).c_str());
     strcat(sbuf, "->#");
-    strcat(sbuf, std::to_string(id_to).c_str());
+    strcat(sbuf, std::to_string(id_to + 1).c_str());
     strcat(sbuf, " does not exist yet. ***\n");
-    if ((write(fd, sbuf, sizeof sbuf)) < 0)
+    if ((write(fd, sbuf, strlen(sbuf))) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);  
+    sem_signal(clisem);
              
-    return "";
+    return -1;
     
 }
 
-*/
+
