@@ -105,7 +105,7 @@ void *shell_fifo(void *sockfd){
     });
 
     while(1){
-		write(fd, "% ", 3);
+		write(fd, "% ", strlen("% "));
         char in_char[15001];
 		memset(&in_char, 0, sizeof in_char);
 		if (!read(fd, in_char, sizeof in_char)){
