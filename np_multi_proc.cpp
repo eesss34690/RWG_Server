@@ -13,7 +13,6 @@
 #include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <sys/types.h> 
 #include <sys/ipc.h> 
 #include <pthread.h>
 
@@ -30,7 +29,7 @@ BrstShrd user_pool;
 unordered_map<int, int> fd_user;
 pthread_t   thread_[30];
 
-#define QLEN	31
+#define QLEN	200
 
 void *shell_fifo(void *sockfd);
 void *receive(void *arg);
@@ -48,9 +47,7 @@ int main(int argc, char *argv[])
 	
 
     signal(SIGUSR2, [](int signo) {
-        cout << "triggered\n";
         pthread_join(thread_[user_pool.cur], NULL);
-        cout << "finished\n";
     });
 
 	switch (argc) {
@@ -67,14 +64,14 @@ int main(int argc, char *argv[])
 	DIR *mydir = NULL;
 	if ( (mydir = opendir("./user_pipe")) == NULL) {
     		cout << " construct directory\n";
-        int ret = chmod(".", 0755);
+        int ret = chmod(".", 0777);
 		if (ret != 0)
 		{
 			cout <<errno << endl;
 			errexit("cannot change permission\n");
 		}
 
-        ret = mkdir("./user_pipe", 0700);
+        ret = mkdir("./user_pipe", 0777);
 		if (ret != 0)
 		{
 			cout <<errno << endl;
@@ -92,7 +89,9 @@ int main(int argc, char *argv[])
 
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-        pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
+		cout << "start distribuing\n";
+		cout <<fd_user[ssock]; 
+       pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
 	}
 }
 
@@ -103,7 +102,6 @@ void *shell_fifo(void *sockfd){
     key_t sem_key2 = 8891;
     if ( (clisem = sem_open(sem_key2)) < 0) 
             errexit("...");
-
     sem_wait(clisem);	
     user_pool.welcome(fd);
     user_pool.login(fd);
@@ -177,6 +175,7 @@ void *shell_fifo(void *sockfd){
         }
         if (input == "exit")
         {
+	    user_pool.
             fd_user.erase(fd);
 		    return NULL;
         }
@@ -189,15 +188,19 @@ void *shell_fifo(void *sockfd){
 void *receive(void *arg)
 {
     int readfd;
+    cout << "reading\n";
     if ( (readfd = open(user_pool.pipes.back().c_str(), O_RDONLY, 0666)) < 0)
 		errexit("server: can't open read fifo: %s", user_pool.pipes.back().c_str());
     user_pool.out_fd.push_back(readfd);
+    return NULL;
 }
 
 void *getout(void *arg)
 {
     int writefd;
+    cout << "writing\n";
     if ( (writefd = open(user_pool.pipes.back().c_str(), O_WRONLY, 0666)) < 0)
 		errexit("server: can't open write fifo: %s", user_pool.pipes.back().c_str());
     user_pool.in_fd.push_back(writefd);
+    return NULL;
 }

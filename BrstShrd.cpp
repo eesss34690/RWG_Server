@@ -111,6 +111,7 @@ void BrstShrd::brst_msg()
 
 void BrstShrd::delete_user(int fd)
 {
+    sem_wait(clisem);
     int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
     users[id] = "";
     ip[id] = "";
@@ -132,6 +133,7 @@ void BrstShrd::delete_user(int fd)
         else
             i++;
     }
+    sem_signal(clisem);
 }
 
 void BrstShrd::who(int fd)
@@ -318,6 +320,7 @@ int BrstShrd::get_out(int fd, string cmd)
         pipes.push_back(temp);
         in_user.push_back(id_fm);
         out_user.push_back(id_to);
+	cout << "ready to connect\n";
         raise(SIGUSR1);
         cout << "finished all\n";
         strcat(sbuf, "*** ");
@@ -382,13 +385,14 @@ int BrstShrd::get_in(string cmd, int fd)
             strcat(sbuf, "' ***\n");
             brst_msg();
             memset(&sbuf, 0, strlen(sbuf)); 
-
+            
             int readfd = out_fd[i];
             in_user.erase(in_user.begin() + i);
             out_user.erase(out_user.begin() + i);
-            in_fd.erase(out_fd.begin() + i);
+            in_fd.erase(in_fd.begin() + i);
             out_fd.erase(out_fd.begin() + i);
             pipes.erase(pipes.begin() + i);
+            cout << readfd << endl;
             sem_signal(clisem);
             return readfd;
         }
