@@ -67,11 +67,17 @@ int main(int argc, char *argv[])
 	DIR *mydir = NULL;
 	if ( (mydir = opendir("./user_pipe")) == NULL) {
     		cout << " construct directory\n";
-		int ret = mkdir("/user_pipe", 0700);
+        int ret = chmod(".", 0755);
 		if (ret != 0)
 		{
 			cout <<errno << endl;
+			errexit("cannot change permission\n");
+		}
 
+        ret = mkdir("./user_pipe", 0700);
+		if (ret != 0)
+		{
+			cout <<errno << endl;
 			errexit("cannot create directory\n");
 		}
 		cout << "finish\n";	
