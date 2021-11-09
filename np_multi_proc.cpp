@@ -46,9 +46,10 @@ int main(int argc, char *argv[])
 	socklen_t	alen;		        /* from-address length		*/
 	
 
-    //signal(SIGUSR2, [](int signo) {
-        //pthread_join(thread_[user_pool.cur], NULL);
-    //});
+    signal(SIGUSR2, [](int signo) {
+        close(user_pool.cur);
+        user_pool.cur = -1;
+    });
 
 	switch (argc) {
 	case	1:
@@ -63,7 +64,7 @@ int main(int argc, char *argv[])
 	msock = passiveTCP(service, QLEN);
 	DIR *mydir = NULL;
 	if ( (mydir = opendir("./user_pipe")) == NULL) {
-    		cout << " construct directory\n";
+    	cout << " construct directory\n";
         int ret = chmod(".", 0777);
 		if (ret != 0)
 		{
@@ -77,7 +78,6 @@ int main(int argc, char *argv[])
 			cout <<errno << endl;
 			errexit("cannot create directory\n");
 		}
-		cout << "finish\n";	
 	}
 	else
 		cout << "existed directory\n";
@@ -89,9 +89,7 @@ int main(int argc, char *argv[])
 		cout << fd_user[ssock] << endl;
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-		cout << ssock << " start distribuing: ";
-		cout <<fd_user[ssock]; 
-       pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
+        pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
 	}
 }
 
@@ -178,6 +176,7 @@ void *shell_fifo(void *sockfd){
             fd_user.erase(fd);
             close(fd);
             fd = -1;
+            raise(SIGUSR2);
 	        pthread_exit(NULL);
 		    return NULL;
         }

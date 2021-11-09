@@ -184,8 +184,11 @@ void BrstShrd::shift_env(int fd)
 {
     sem_wait(clisem);
     int id = std::distance(socket.begin(), std::find(socket.begin(), socket.end(), fd));
-    for (auto &i: env[cur])
-        ::unsetenv(i.first.c_str());
+    if (cur != -1)
+    {
+        for (auto &i: env[cur])
+            ::unsetenv(i.first.c_str());        
+    }
     cur = id;
     for (auto &i: env[id])
         ::setenv(i.first.c_str(), i.second.c_str(), 1);
