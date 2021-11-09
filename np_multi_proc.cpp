@@ -2,6 +2,8 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include<dirent.h>  
 #include <netinet/in.h>
 #include <time.h>
 #include <unistd.h>
@@ -62,6 +64,20 @@ int main(int argc, char *argv[])
 	}
 
 	msock = passiveTCP(service, QLEN);
+	DIR *mydir = NULL;
+	if ( (mydir = opendir("./user_pipe")) == NULL) {
+    		cout << " construct directory\n";
+		int ret = mkdir("/user_pipe", 0700);
+		if (ret != 0)
+		{
+			cout <<errno << endl;
+
+			errexit("cannot create directory\n");
+		}
+		cout << "finish\n";	
+	}
+	else
+		cout << "existed directory\n";
 
 	while (1) {
 		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
