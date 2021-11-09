@@ -2,7 +2,6 @@
 
 int	passivesock(const char *service, const char *transport,
 		int qlen);
-int	passivesock_brst(const char *service, const char *transport);
 /*------------------------------------------------------------------------
  * passiveTCP - create a passive socket for use in a TCP server
  *------------------------------------------------------------------------

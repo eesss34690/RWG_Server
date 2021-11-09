@@ -435,7 +435,7 @@ int Pipe_block::execute_fifo(BrstShrd& env, Pipeline& all, bool first, bool last
 		env.delete_user(sock);
 		::close(sock);
 		sock = -1;
-		raise(SIGUSR2);
+		//raise(SIGUSR2);
 		return 0;
 	}
 	else if (m_flag == -1)

@@ -36,7 +36,6 @@ int BrstShrd::add_user(sockaddr_in fsin, int sock)
 {
     sem_wait(clisem);
     update_small();
-    cout << "smallest: "<< smallest << endl;
     users[smallest] = "(no name)";
     ip[smallest] = inet_ntoa(fsin.sin_addr);
     ports[smallest] = std::to_string((int)ntohs(fsin.sin_port));
@@ -67,7 +66,6 @@ void BrstShrd::welcome(int fd)
     strcat(sbuf, "****************************************\n\
 ** Welcome to the information server. **\n\
 ****************************************\n\0");
-    cout << sizeof sbuf << endl;
     if ((write(fd, sbuf, strlen(sbuf) )) < 0)
         errexit ("write error brst\n");
     memset(&sbuf, 0, sizeof sbuf);
@@ -98,7 +96,6 @@ void BrstShrd::logout(int fd)
 
 void BrstShrd::brst_msg()
 {
-    cout << strlen(sbuf) << endl;
     for (auto &i: socket)
     {
         if (i != 0)

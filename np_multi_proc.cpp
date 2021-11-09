@@ -29,7 +29,7 @@ BrstShrd user_pool;
 unordered_map<int, int> fd_user;
 pthread_t   thread_[30];
 
-#define QLEN	200
+#define QLEN	300
 
 void *shell_fifo(void *sockfd);
 void *receive(void *arg);
@@ -46,9 +46,9 @@ int main(int argc, char *argv[])
 	socklen_t	alen;		        /* from-address length		*/
 	
 
-    signal(SIGUSR2, [](int signo) {
-        pthread_join(thread_[user_pool.cur], NULL);
-    });
+    //signal(SIGUSR2, [](int signo) {
+        //pthread_join(thread_[user_pool.cur], NULL);
+    //});
 
 	switch (argc) {
 	case	1:
@@ -84,12 +84,12 @@ int main(int argc, char *argv[])
 
 	while (1) {
 		ssock = accept(msock, (struct sockaddr *)&fsin, &alen);
-
+		cout << ssock << " before\n";
 		fd_user[ssock] = user_pool.add_user(fsin, ssock);
-
+		cout << fd_user[ssock] << endl;
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-		cout << "start distribuing\n";
+		cout << ssock << " start distribuing: ";
 		cout <<fd_user[ssock]; 
        pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
 	}
@@ -178,6 +178,7 @@ void *shell_fifo(void *sockfd){
 	        sem_wait(clisem);
             fd_user.erase(fd);
             sem_signal(clisem);
+	    pthread_exit(NULL);
 		    return NULL;
         }
 	    all.next_(); 
