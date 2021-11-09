@@ -175,8 +175,9 @@ void *shell_fifo(void *sockfd){
         }
         if (input == "exit")
         {
-	    user_pool.
+	        sem_wait(clisem);
             fd_user.erase(fd);
+            sem_signal(clisem);
 		    return NULL;
         }
 	    all.next_(); 

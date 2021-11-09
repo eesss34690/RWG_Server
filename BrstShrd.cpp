@@ -36,6 +36,7 @@ int BrstShrd::add_user(sockaddr_in fsin, int sock)
 {
     sem_wait(clisem);
     update_small();
+    cout << "smallest: "<< smallest << endl;
     users[smallest] = "(no name)";
     ip[smallest] = inet_ntoa(fsin.sin_addr);
     ports[smallest] = std::to_string((int)ntohs(fsin.sin_port));
@@ -58,7 +59,7 @@ void BrstShrd::update_small()
         }
     }
     if (i == 30)
-        std::cerr << "out of range users login\n";
+        errexit("out of range users login\n");
 }
 
 void BrstShrd::welcome(int fd)
