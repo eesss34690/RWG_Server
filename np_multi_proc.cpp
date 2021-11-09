@@ -175,10 +175,10 @@ void *shell_fifo(void *sockfd){
         }
         if (input == "exit")
         {
-	        sem_wait(clisem);
             fd_user.erase(fd);
-            sem_signal(clisem);
-	    pthread_exit(NULL);
+            close(fd);
+            fd = -1;
+	        pthread_exit(NULL);
 		    return NULL;
         }
 	    all.next_(); 
