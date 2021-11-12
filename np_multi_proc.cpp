@@ -27,8 +27,8 @@ void    sem_signal(int id);
 
 BrstShrd user_pool;
 unordered_map<int, int> fd_user;
-pthread_t   thread_[30];
-
+//pthread_t   thread_[30];
+pthread_t       thread_;
 #define QLEN	300
 
 void *shell_fifo(void *sockfd);
@@ -47,7 +47,8 @@ int main(int argc, char *argv[])
 	
 
     signal(SIGUSR2, [](int signo) {
-        close(user_pool.cur);
+        close(user_pool.socket[user_pool.cur]);
+        user_pool.socket[user_pool.cur] = 0;
         user_pool.cur = -1;
     });
 
@@ -89,7 +90,8 @@ int main(int argc, char *argv[])
 		cout << fd_user[ssock] << endl;
 		if (ssock < 0)
 			errexit("accept failed: %s\n", strerror(errno));
-        pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
+        //pthread_create(&thread_[fd_user[ssock]], NULL, shell_fifo, &ssock);
+	pthread_create(&thread_, NULL, shell_fifo, &ssock);
 	}
 }
 
@@ -177,7 +179,9 @@ void *shell_fifo(void *sockfd){
             close(fd);
             fd = -1;
             raise(SIGUSR2);
-	        pthread_exit(NULL);
+	    fflush(stdout);
+	        //pthread_exit(NULL);
+
 		    return NULL;
         }
 	    all.next_(); 

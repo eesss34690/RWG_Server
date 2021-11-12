@@ -117,7 +117,7 @@ void BrstShrd::delete_user(int fd)
     for (auto &i: env[id])
         ::unsetenv(i.first.c_str());
     env[id].clear();
-    socket[id] = 0;
+    //socket[id] = 0;
     for (int i = 0; i< in_user.size();)
     {
         if (in_user[i] == id || out_user[i] == id)
